@@ -12,6 +12,7 @@ import {
   HasMany
 } from "sequelize-typescript";
 import ContactCustomField from "./ContactCustomField";
+import Schedule from "./Schedule";
 import Ticket from "./Ticket";
 
 @Table
@@ -52,6 +53,14 @@ class Contact extends Model<Contact> {
 
   @HasMany(() => ContactCustomField)
   extraInfo: ContactCustomField[];
+
+  @HasMany(() => Schedule, {
+    onUpdate: "CASCADE",
+    onDelete: "CASCADE",
+    hooks: true
+  })
+  schedules: Schedule[];
+
 }
 
 export default Contact;

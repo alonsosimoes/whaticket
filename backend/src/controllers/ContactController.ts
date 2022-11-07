@@ -8,11 +8,12 @@ import ShowContactService from "../services/ContactServices/ShowContactService";
 import UpdateContactService from "../services/ContactServices/UpdateContactService";
 import DeleteContactService from "../services/ContactServices/DeleteContactService";
 
-import CheckContactNumber from "../services/WbotServices/CheckNumber"
+import CheckContactNumber from "../services/WbotServices/CheckNumber";
 import CheckIsValidContact from "../services/WbotServices/CheckIsValidContact";
 import GetProfilePicUrl from "../services/WbotServices/GetProfilePicUrl";
 import AppError from "../errors/AppError";
 import GetContactService from "../services/ContactServices/GetContactService";
+import SimpleListService, { SearchContactParams } from "../services/ContactServices/SimpleListService";
 
 type IndexQuery = {
   searchParam: string;
@@ -46,7 +47,10 @@ export const index = async (req: Request, res: Response): Promise<Response> => {
   return res.json({ contacts, count, hasMore });
 };
 
-export const getContact = async (req: Request, res: Response): Promise<Response> => {
+export const getContact = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
   const { name, number } = req.body as IndexGetContactQuery;
 
   const contact = await GetContactService({
@@ -75,18 +79,15 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
   }
 
   await CheckIsValidContact(newContact.number);
-  const validNumber : any = await CheckContactNumber(newContact.number)
-  
+  const validNumber = await CheckContactNumber(newContact.number);
+
   const profilePicUrl = await GetProfilePicUrl(validNumber);
 
-  let name = newContact.name
-  let number = validNumber
-  let email = newContact.email
-  let extraInfo = newContact.extraInfo
+  const { name, extraInfo, email } = newContact;
 
   const contact = await CreateContactService({
     name,
-    number,
+    number: validNumber,
     email,
     extraInfo,
     profilePicUrl
@@ -160,3 +161,16 @@ export const remove = async (
 
   return res.status(200).json({ message: "Contact deleted" });
 };
+
+export const list = async (req: Request, res: Response): Promise<Response> => {
+  const { name } = req.query as unknown as SearchContactParams;
+
+  try {
+    const contacts = await SimpleListService({ name });
+
+    return res.json(contacts);
+  } catch (err) {
+    throw new AppError(err.message);
+  }
+};
+

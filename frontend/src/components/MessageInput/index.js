@@ -354,7 +354,7 @@ const MessageInput = ({ ticketStatus }) => {
       }
 
       const formData = new FormData();
-      const filename = `${new Date().getTime()}.mp3`;
+      const filename = `audio-record-site-${new Date().getTime()}.mp3`;
       formData.append("medias", blob, filename);
       formData.append("body", filename);
       formData.append("fromMe", true);

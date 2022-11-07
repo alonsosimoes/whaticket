@@ -9,6 +9,7 @@ import Tab from "@material-ui/core/Tab";
 import Badge from "@material-ui/core/Badge";
 import MoveToInboxIcon from "@material-ui/icons/MoveToInbox";
 import CheckBoxIcon from "@material-ui/icons/CheckBox";
+import { TagsFilter } from "../TagsFilter";
 
 import FormControlLabel from "@material-ui/core/FormControlLabel";
 import Switch from "@material-ui/core/Switch";
@@ -104,6 +105,7 @@ const TicketsManager = () => {
 
   const [openCount, setOpenCount] = useState(0);
   const [pendingCount, setPendingCount] = useState(0);
+  const [selectedTags, setSelectedTags] = useState([]);
 
   const userQueueIds = user.queues.map((q) => q.id);
   const [selectedQueueIds, setSelectedQueueIds] = useState(userQueueIds || []);
@@ -118,7 +120,6 @@ const TicketsManager = () => {
   useEffect(() => {
     if (tab === "search") {
       searchInputRef.current.focus();
-      setSearchParam("");
     }
   }, [tab]);
 
@@ -139,6 +140,11 @@ const TicketsManager = () => {
       setSearchParam(searchedTerm);
     }, 500);
   };
+
+  const handleSelectedTags = (selecteds) => {
+    const tags = selecteds.map(t => t.id);
+    setSelectedTags(tags);
+  }
 
   const handleChangeTab = (e, newValue) => {
     setTab(newValue);
@@ -297,8 +303,10 @@ const TicketsManager = () => {
         />
       </TabPanel>
       <TabPanel value={tab} name="search" className={classes.ticketsWrapper}>
+      <TagsFilter onFiltered={handleSelectedTags} />
         <TicketsList
           searchParam={searchParam}
+          tags={selectedTags}
           showAll={true}
           selectedQueueIds={selectedQueueIds}
         />

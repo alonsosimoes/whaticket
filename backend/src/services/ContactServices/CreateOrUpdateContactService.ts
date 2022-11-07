@@ -31,26 +31,36 @@ const CreateOrUpdateContactService = async ({
   contact = await Contact.findOne({ where: { number } });
 
   if (contact) {
-    contact.update({ profilePicUrl });
+    try {
+      await contact.update({ profilePicUrl });
 
-    io.emit("contact", {
-      action: "update",
-      contact
-    });
-  } else {
-    contact = await Contact.create({
-      name,
-      number,
-      profilePicUrl,
-      email,
-      isGroup,
-      extraInfo
-    });
+      io.emit("contact", {
+        action: "update",
+        contact
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  }
 
-    io.emit("contact", {
-      action: "create",
-      contact
-    });
+  if (!contact) {
+    try {
+      contact = await Contact.create({
+        name,
+        number,
+        profilePicUrl,
+        email,
+        isGroup,
+        extraInfo
+      });
+
+      io.emit("contact", {
+        action: "create",
+        contact
+      });
+    } catch (error) {
+      console.log(error);
+    }
   }
 
   return contact;

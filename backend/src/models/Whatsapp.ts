@@ -54,6 +54,10 @@ class Whatsapp extends Model<Whatsapp> {
   farewellMessage: string;
 
   @Default(false)
+  @Column(DataType.BOOLEAN)
+  isMultidevice: boolean;
+
+  @Default(false)
   @AllowNull
   @Column
   isDefault: boolean;
@@ -72,6 +76,50 @@ class Whatsapp extends Model<Whatsapp> {
 
   @HasMany(() => WhatsappQueue)
   whatsappQueues: WhatsappQueue[];
+
+  @Column(DataType.TEXT)
+  transferTicketMessage: string;
+
+  @Column
+  startWorkHour: string;
+
+  @Column
+  endWorkHour: string;
+
+  @AllowNull
+  @Column(DataType.TEXT)
+  startWorkHourWeekend: string;
+
+  @AllowNull
+  @Column
+  endWorkHourWeekend: string;
+
+  @Column
+  defineWorkHours: string;
+
+  @Column
+  monday: boolean;
+
+  @Column
+  tuesday: boolean;
+
+  @Column
+  wednesday: boolean;
+
+  @Column
+  thursday: boolean;
+
+  @Column
+  friday: boolean;
+
+  @Column
+  saturday: boolean;
+
+  @Column
+  sunday: boolean;
+
+  @Column(DataType.TEXT)
+  outOfWorkMessage: string;
 }
 
 export default Whatsapp;

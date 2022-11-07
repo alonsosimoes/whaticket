@@ -8,16 +8,19 @@ import ShowTicketService from "../services/TicketServices/ShowTicketService";
 import UpdateTicketService from "../services/TicketServices/UpdateTicketService";
 import SendWhatsAppMessage from "../services/WbotServices/SendWhatsAppMessage";
 import ShowWhatsAppService from "../services/WhatsappService/ShowWhatsAppService";
-import formatBody from "../helpers/Mustache";
+
+import Ticket from "../models/Ticket";
 
 type IndexQuery = {
   searchParam: string;
   pageNumber: string;
   status: string;
   date: string;
+  updatedAt?: string;
   showAll: string;
   withUnreadMessages: string;
   queueIds: string;
+  tags: string;
 };
 
 interface TicketData {
@@ -32,25 +35,34 @@ export const index = async (req: Request, res: Response): Promise<Response> => {
     pageNumber,
     status,
     date,
+    updatedAt,
     searchParam,
     showAll,
     queueIds: queueIdsStringified,
+    tags: tagIdsStringified,
     withUnreadMessages
   } = req.query as IndexQuery;
 
   const userId = req.user.id;
 
   let queueIds: number[] = [];
+  let tagsIds: number[] = [];
 
   if (queueIdsStringified) {
     queueIds = JSON.parse(queueIdsStringified);
   }
 
+  if (tagIdsStringified) {
+    tagsIds = JSON.parse(tagIdsStringified);
+  }
+
   const { tickets, count, hasMore } = await ListTicketsService({
     searchParam,
+    tags: tagsIds,
     pageNumber,
     status,
     date,
+    updatedAt,
     showAll,
     userId,
     queueIds,
@@ -61,9 +73,9 @@ export const index = async (req: Request, res: Response): Promise<Response> => {
 };
 
 export const store = async (req: Request, res: Response): Promise<Response> => {
-  const { contactId, status, userId }: TicketData = req.body;
+  const { contactId, status, userId, queueId }: TicketData = req.body;
 
-  const ticket = await CreateTicketService({ contactId, status, userId });
+  const ticket = await CreateTicketService({ contactId, status, userId, queueId });
 
   const io = getIO();
   io.to(ticket.status).emit("ticket", {
@@ -77,7 +89,9 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
 export const show = async (req: Request, res: Response): Promise<Response> => {
   const { ticketId } = req.params;
 
-  const contact = await ShowTicketService(ticketId);
+  const ticket = await ShowTicketService(ticketId);
+
+  const contact = ticket;
 
   return res.status(200).json(contact);
 };
@@ -100,12 +114,17 @@ export const update = async (
     const { farewellMessage } = whatsapp;
 
     if (farewellMessage) {
-      await SendWhatsAppMessage({
-        body: formatBody(farewellMessage, ticket.contact),
-        ticket
-      });
-    }
-  }
+
+      var str = farewellMessage;
+      var newstr = str.replace('{TICKET}', `${ticket.id}`);
+      newstr = newstr.replace('{CLIENTE}', ticket.contact.name);
+
+        await SendWhatsAppMessage({
+         body: newstr,
+         ticket
+       });
+     }
+   }
 
   return res.status(200).json(ticket);
 };

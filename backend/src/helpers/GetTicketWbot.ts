@@ -1,7 +1,13 @@
-import { Client as Session } from "whatsapp-web.js";
+import { AnyWASocket } from "@adiwajshing/baileys";
 import { getWbot } from "../libs/wbot";
 import GetDefaultWhatsApp from "./GetDefaultWhatsApp";
 import Ticket from "../models/Ticket";
+import { Store } from "../libs/store";
+
+type Session = AnyWASocket & {
+  id?: number;
+  store?: Store;
+};
 
 const GetTicketWbot = async (ticket: Ticket): Promise<Session> => {
   if (!ticket.whatsappId) {

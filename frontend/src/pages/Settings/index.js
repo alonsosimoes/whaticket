@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import openSocket from "../../services/socket-io";
+import openSocket from "socket.io-client";
 
 import { makeStyles } from "@material-ui/core/styles";
 import Paper from "@material-ui/core/Paper";
@@ -8,6 +8,8 @@ import Container from "@material-ui/core/Container";
 import Select from "@material-ui/core/Select";
 import TextField from "@material-ui/core/TextField";
 import { toast } from "react-toastify";
+
+import Tooltip from "@material-ui/core/Tooltip";
 
 import api from "../../services/api";
 import { i18n } from "../../translate/i18n.js";
@@ -55,7 +57,7 @@ const Settings = () => {
 	}, []);
 
 	useEffect(() => {
-		const socket = openSocket();
+		const socket = openSocket(process.env.REACT_APP_BACKEND_URL);
 
 		socket.on("settings", data => {
 			if (data.action === "update") {
@@ -94,7 +96,7 @@ const Settings = () => {
 
 	return (
 		<div className={classes.root}>
-			<Container className={classes.container} maxWidth="sm">
+			<Container className={classes.container} >
 				<Typography variant="body2" gutterBottom>
 					{i18n.t("settings.title")}
 				</Typography>
@@ -121,20 +123,143 @@ const Settings = () => {
 							{i18n.t("settings.settings.userCreation.options.disabled")}
 						</option>
 					</Select>
+				</Paper>
+							
+				<Typography variant="body2" gutterBottom></Typography>
+				<Tooltip title={i18n.t("settings.settings.timeCreateNewTicket.note")}>
+					<Paper className={classes.paper} elevation={3}>
+						<Typography variant="body1">
+							{i18n.t("settings.settings.timeCreateNewTicket.name")}
+						</Typography>
+						<Select
+							margin="dense"
+							variant="outlined"
+							native
+							id="timeCreateNewTicket-setting"
+							name="timeCreateNewTicket"
+							value={
+								settings && settings.length > 0 && getSettingValue("timeCreateNewTicket")
+							}
+							className={classes.settingOption}
+							onChange={handleChangeSetting}
+						>
+							<option value="10">
+								{i18n.t("settings.settings.timeCreateNewTicket.options.10")}
+							</option>
+							<option value="30">
+								{i18n.t("settings.settings.timeCreateNewTicket.options.30")}
+							</option>
+							<option value="60">
+								{i18n.t("settings.settings.timeCreateNewTicket.options.60")}
+							</option>
+							<option value="300">
+								{i18n.t("settings.settings.timeCreateNewTicket.options.300")}
+							</option>
+							<option value="1800">
+								{i18n.t("settings.settings.timeCreateNewTicket.options.1800")}
+							</option>
+							<option value="3600">
+								{i18n.t("settings.settings.timeCreateNewTicket.options.3600")}
+							</option>
+							<option value="7200">
+								{i18n.t("settings.settings.timeCreateNewTicket.options.7200")}
+							</option>
+							<option value="21600">
+								{i18n.t("settings.settings.timeCreateNewTicket.options.21600")}
+							</option>
+							<option value="43200">
+								{i18n.t("settings.settings.timeCreateNewTicket.options.43200")}
+							</option>
+							<option value="86400">
+								{i18n.t("settings.settings.timeCreateNewTicket.options.86400")}
+							</option>
+							<option value="172800">
+								{i18n.t("settings.settings.timeCreateNewTicket.options.172800")}
+							</option>
+						</Select>
+					</Paper>
+				</Tooltip>
 
+				<Typography variant="body2" gutterBottom></Typography>
+				<Paper className={classes.paper}>
+
+					<Typography variant="body1">
+						{i18n.t("settings.settings.call.name")}
+					</Typography>
+					<Select
+						margin="dense"
+						variant="outlined"
+						native
+						id="call-setting"
+						name="call"
+						value={
+							settings && settings.length > 0 && getSettingValue("call")
+						}
+						className={classes.settingOption}
+						onChange={handleChangeSetting}
+					>
+						<option value="enabled">
+							{i18n.t("settings.settings.call.options.enabled")}
+						</option>
+						<option value="disabled">
+							{i18n.t("settings.settings.call.options.disabled")}
+						</option>
+					</Select>
 				</Paper>
 
 				<Paper className={classes.paper}>
-					<TextField
-						id="api-token-setting"
-						readonly
-						label="Token Api"
+					<Typography variant="body1">
+						{i18n.t("settings.settings.CheckMsgIsGroup.name")}
+					</Typography>
+					<Select
 						margin="dense"
 						variant="outlined"
-						fullWidth
-						value={settings && settings.length > 0 && getSettingValue("userApiToken")}
-					/>
+						native
+						id="CheckMsgIsGroup-setting"
+						name="CheckMsgIsGroup"
+						value={
+							settings && settings.length > 0 && getSettingValue("CheckMsgIsGroup")
+						}
+						className={classes.settingOption}
+						onChange={handleChangeSetting}
+					>
+						<option value="enabled">
+							{i18n.t("settings.settings.CheckMsgIsGroup.options.enabled")}
+						</option>
+						<option value="disabled">
+							{i18n.t("settings.settings.CheckMsgIsGroup.options.disabled")}
+						</option>
+					</Select>
 				</Paper>
+
+        <Paper className={classes.paper}>
+          <Typography variant="body1">
+            Tipo do Chatbot
+          </Typography>
+          <Select
+            margin="dense"
+            variant="outlined"
+            native
+            id="chatBotType-setting"
+            name="chatBotType"
+            value={settings && settings.length > 0 && getSettingValue("chatBotType")}
+            className={classes.settingOption}
+            onChange={handleChangeSetting}
+          >
+            <option value="text">
+              Texto
+            </option>
+
+            <option value="button">
+              Botão
+            </option>
+
+						<option value="list">
+              Lista
+            </option>
+
+          </Select>
+        </Paper>
 
 			</Container>
 		</div>

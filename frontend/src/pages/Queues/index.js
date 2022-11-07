@@ -1,6 +1,6 @@
 import React, { useEffect, useReducer, useState } from "react";
 
-import openSocket from "../../services/socket-io";
+import openSocket from "socket.io-client";
 
 import {
   Button,
@@ -33,7 +33,6 @@ const useStyles = makeStyles((theme) => ({
     flex: 1,
     padding: theme.spacing(1),
     overflowY: "scroll",
-    ...theme.scrollbarStyles,
   },
   customTableCell: {
     display: "flex",
@@ -111,7 +110,12 @@ const Queues = () => {
   }, []);
 
   useEffect(() => {
-    const socket = openSocket();
+    const token = JSON.parse(localStorage.getItem("token"));
+
+    const socket = openSocket(process.env.REACT_APP_BACKEND_URL, {query: {token}});
+    socket.on("connect", () => {
+      socket.emit("joinCompany")
+    });
 
     socket.on("queue", (data) => {
       if (data.action === "update" || data.action === "create") {
@@ -133,7 +137,9 @@ const Queues = () => {
     setSelectedQueue(null);
   };
 
+
   const handleCloseQueueModal = () => {
+    console.log('fechou modal')
     setQueueModalOpen(false);
     setSelectedQueue(null);
   };
@@ -177,6 +183,16 @@ const Queues = () => {
         open={queueModalOpen}
         onClose={handleCloseQueueModal}
         queueId={selectedQueue?.id}
+        onEdit={(res) => {
+          if(res) {
+              setTimeout(() => {
+                // setQueueModalOpen(true)
+                // setSelectedQueue(res.id)
+                handleEditQueue(res)
+                // handleOpenQueueModalChatbot(res.id)
+              }, 200)
+          }
+        }}
       />
       <MainHeader>
         <Title>{i18n.t("queues.title")}</Title>

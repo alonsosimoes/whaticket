@@ -6,6 +6,7 @@ import openSocket from "../../services/socket-io";
 import clsx from "clsx";
 
 import { Paper, makeStyles } from "@material-ui/core";
+import { TagsContainer } from "../TagsContainer";
 
 import ContactDrawer from "../ContactDrawer";
 import MessageInput from "../MessageInput/";
@@ -164,6 +165,9 @@ const Ticket = () => {
             <TicketActionButtons ticket={ticket} />
           </div>
         </TicketHeader>
+        <Paper>
+          <TagsContainer ticket={ticket} />
+        </Paper>
         <ReplyMessageProvider>
           <MessagesList
             ticketId={ticketId}

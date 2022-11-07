@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { getIO } from "../libs/socket";
 import { removeWbot } from "../libs/wbot";
 import { StartWhatsAppSession } from "../services/WbotServices/StartWhatsAppSession";
-
+import AppError from "../errors/AppError";
 import CreateWhatsAppService from "../services/WhatsappService/CreateWhatsAppService";
 import DeleteWhatsAppService from "../services/WhatsappService/DeleteWhatsAppService";
 import ListWhatsAppsService from "../services/WhatsappService/ListWhatsAppsService";
@@ -16,6 +16,23 @@ interface WhatsappData {
   farewellMessage?: string;
   status?: string;
   isDefault?: boolean;
+  isMultidevice?: boolean;
+  startWorkHour?: string;
+  daysOfWeek: string;
+  endWorkHour?: string;
+  startWorkHourWeekend?: string;
+  endWorkHourWeekend?: string;
+  outOfWorkMessage?: string;
+  monday?: string;
+  tuesday?: string;
+  wednesday?: string;
+  thursday?: string;
+  friday?: string;
+  saturday?: string;
+  sunday?: string;
+  transferQueueMessage?: string;
+  defineWorkHours: string;
+  transferTicketMessage?: string;
 }
 
 export const index = async (req: Request, res: Response): Promise<Response> => {
@@ -25,13 +42,36 @@ export const index = async (req: Request, res: Response): Promise<Response> => {
 };
 
 export const store = async (req: Request, res: Response): Promise<Response> => {
+
+  const WhatsApps = await ListWhatsAppsService();
+  
+  if (WhatsApps.length >= Number(process.env.CONNECTIONS_LIMIT)) {
+    throw new AppError("ERR_NO_PERMISSION", 403);
+  }
+
   const {
     name,
     status,
     isDefault,
     greetingMessage,
     farewellMessage,
-    queueIds
+    queueIds,
+    isMultidevice,
+    transferTicketMessage,
+    startWorkHour,
+    endWorkHour,
+    daysOfWeek,
+    startWorkHourWeekend,
+    endWorkHourWeekend,
+    outOfWorkMessage,
+    monday,
+    tuesday,
+    wednesday,
+    thursday,
+    friday,
+    saturday,
+    sunday,
+    defineWorkHours
   }: WhatsappData = req.body;
 
   const { whatsapp, oldDefaultWhatsapp } = await CreateWhatsAppService({
@@ -40,7 +80,23 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
     isDefault,
     greetingMessage,
     farewellMessage,
-    queueIds
+    queueIds,
+    isMultidevice,
+    transferTicketMessage,
+    startWorkHour,
+    endWorkHour,
+    daysOfWeek,
+    startWorkHourWeekend,
+    endWorkHourWeekend,
+    outOfWorkMessage,
+    monday,
+    tuesday,
+    wednesday,
+    thursday,
+    friday,
+    saturday,
+    sunday,
+    defineWorkHours
   });
 
   StartWhatsAppSession(whatsapp);

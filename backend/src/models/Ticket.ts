@@ -9,12 +9,15 @@ import {
   BelongsTo,
   HasMany,
   AutoIncrement,
-  Default
+  Default,
+  BelongsToMany
 } from "sequelize-typescript";
 
 import Contact from "./Contact";
 import Message from "./Message";
 import Queue from "./Queue";
+import Tag from "./Tag";
+import TicketTag from "./TicketTag";
 import User from "./User";
 import Whatsapp from "./Whatsapp";
 
@@ -37,6 +40,14 @@ class Ticket extends Model<Ticket> {
   @Default(false)
   @Column
   isGroup: boolean;
+
+  @Default(false)
+  @Column
+  isBot: boolean;
+
+  @Default("whatsapp")
+  @Column
+  channel: string;
 
   @CreatedAt
   createdAt: Date;
@@ -74,6 +85,12 @@ class Ticket extends Model<Ticket> {
 
   @HasMany(() => Message)
   messages: Message[];
+
+  @HasMany(() => TicketTag)
+  ticketTags: TicketTag[];
+
+  @BelongsToMany(() => Tag, () => TicketTag)
+  tags: Tag[];
 }
 
 export default Ticket;

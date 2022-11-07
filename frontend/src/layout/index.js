@@ -24,6 +24,9 @@ import UserModal from "../components/UserModal";
 import { AuthContext } from "../context/Auth/AuthContext";
 import BackdropLoading from "../components/BackdropLoading";
 import { i18n } from "../translate/i18n";
+import logo from "../assets/logo.png";
+import { versionSystem } from "../../package.json";
+import { nomeEmpresa } from "../../package.json";
 
 const drawerWidth = 240;
 
@@ -177,6 +180,7 @@ const LoggedInLayout = ({ children }) => {
         open={drawerOpen}
       >
         <div className={classes.toolbarIcon}>
+          <img src={logo} width={"80%"} style={{ marginLeft: 'auto' ,marginRight:'auto', display:'flex'}} />
           <IconButton onClick={() => setDrawerOpen(!drawerOpen)}>
             <ChevronLeftIcon />
           </IconButton>
@@ -217,9 +221,11 @@ const LoggedInLayout = ({ children }) => {
             noWrap
             className={classes.title}
           >
-            MultiWhats
+            { nomeEmpresa } - v { versionSystem }
+            
           </Typography>
-          {user.id && <NotificationsPopOver />}
+        {user.id && <NotificationsPopOver />}
+          
 
           <div>
             <IconButton

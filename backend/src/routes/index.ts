@@ -1,16 +1,21 @@
 import { Router } from "express";
-
-import userRoutes from "./userRoutes";
+import apiRoutes from "./apiRoutes";
 import authRoutes from "./authRoutes";
-import settingRoutes from "./settingRoutes";
+import bulkMessageRoutes from "./bulkMessageRoutes";
+import chatBot from "./chatBotRoutes";
 import contactRoutes from "./contactRoutes";
-import ticketRoutes from "./ticketRoutes";
-import whatsappRoutes from "./whatsappRoutes";
 import messageRoutes from "./messageRoutes";
-import whatsappSessionRoutes from "./whatsappSessionRoutes";
 import queueRoutes from "./queueRoutes";
 import quickAnswerRoutes from "./quickAnswerRoutes";
-import apiRoutes from "./apiRoutes";
+import scheduleRoutes from "./scheduleRoutes";
+import settingMessageRoutes from "./settingMessageRoutes";
+import settingRoutes from "./settingRoutes";
+import tagRoutes from "./tagRoutes";
+import ticketRoutes from "./ticketRoutes";
+import userRoutes from "./userRoutes";
+import webHookRoutes from "./webHookRoutes";
+import whatsappRoutes from "./whatsappRoutes";
+import whatsappSessionRoutes from "./whatsappSessionRoutes";
 
 const routes = Router();
 
@@ -24,6 +29,12 @@ routes.use(messageRoutes);
 routes.use(whatsappSessionRoutes);
 routes.use(queueRoutes);
 routes.use(quickAnswerRoutes);
+routes.use(chatBot);
+routes.use(scheduleRoutes);
+routes.use(tagRoutes);
+routes.use("/webhook", webHookRoutes);
 routes.use("/api/messages", apiRoutes);
+routes.use("/bulkMessage", bulkMessageRoutes);
+routes.use(settingMessageRoutes);
 
 export default routes;

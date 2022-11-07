@@ -6,6 +6,9 @@ import Contact from "../../models/Contact";
 import Message from "../../models/Message";
 import Queue from "../../models/Queue";
 import ShowUserService from "../UserServices/ShowUserService";
+import Tag from "../../models/Tag";
+import { intersection } from "lodash";
+import TicketTag from "../../models/TicketTag";
 import Whatsapp from "../../models/Whatsapp";
 
 interface Request {
@@ -13,10 +16,12 @@ interface Request {
   pageNumber?: string;
   status?: string;
   date?: string;
+  updatedAt?: string;
   showAll?: string;
   userId: string;
   withUnreadMessages?: string;
   queueIds: number[];
+  tags: number[];
 }
 
 interface Response {
@@ -29,8 +34,10 @@ const ListTicketsService = async ({
   searchParam = "",
   pageNumber = "1",
   queueIds,
+  tags,
   status,
   date,
+  updatedAt,
   showAll,
   userId,
   withUnreadMessages
@@ -56,6 +63,11 @@ const ListTicketsService = async ({
       model: Whatsapp,
       as: "whatsapp",
       attributes: ["name"]
+    },
+    {
+      model: Tag,
+      as: "tags",
+      attributes: ["id", "name", "color"]
     }
   ];
 
@@ -121,6 +133,17 @@ const ListTicketsService = async ({
     };
   }
 
+  if (updatedAt) {
+    whereCondition = {
+      updatedAt: {
+        [Op.between]: [
+          +startOfDay(parseISO(updatedAt)),
+          +endOfDay(parseISO(updatedAt))
+        ]
+      }
+    };
+  }
+
   if (withUnreadMessages === "true") {
     const user = await ShowUserService(userId);
     const userQueueIds = user.queues.map(queue => queue.id);
@@ -129,6 +152,24 @@ const ListTicketsService = async ({
       [Op.or]: [{ userId }, { status: "pending" }],
       queueId: { [Op.or]: [userQueueIds, null] },
       unreadMessages: { [Op.gt]: 0 }
+    };
+  }
+
+  if (Array.isArray(tags) && tags.length > 0) {
+    const ticketsTagFilter = [];
+    for (let tag of tags) {
+      const ticketTags = await TicketTag.findAll({ where: { tagId: tag } });
+      if (ticketTags) {
+        ticketsTagFilter.push(ticketTags.map(t => t.ticketId));
+      }
+    }
+
+    const ticketsIntersection: number[] = intersection(...ticketsTagFilter);
+
+    whereCondition = {
+      id: {
+        [Op.in]: ticketsIntersection
+      }
     };
   }
 
@@ -141,7 +182,8 @@ const ListTicketsService = async ({
     distinct: true,
     limit,
     offset,
-    order: [["updatedAt", "DESC"]]
+    order: [["updatedAt", "DESC"]],
+    subQuery: false
   });
 
   const hasMore = count > offset + tickets.length;
