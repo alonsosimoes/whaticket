@@ -1,8 +1,8 @@
 {
   "name": "frontend",
   "version": "0.1.0",
-  "nomeEmpresa": "Whatsapp",
-  "versionSystem": "2.1.8",
+  "nomeEmpresa": "MultiWhats",
+  "versionSystem": "2.0.0",
   "private": true,
   "dependencies": {
     "@material-ui/core": "^4.11.0",

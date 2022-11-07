@@ -361,6 +361,8 @@ const verifyMediaMessage = async (
   }
 
   try {
+    const ext = media.mimetype.split("/")[1].split(";")[0];
+    media.filename = `${new Date().getTime()} - ${media.filename}`;
     await writeFileAsync(
       join(__dirname, "..", "..", "..", "public", media.filename),
       media.data,
