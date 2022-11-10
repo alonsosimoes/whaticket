@@ -191,12 +191,12 @@ const TicketsList = (props) => {
 		} else {
 			dispatch({ type: "LOAD_TICKETS", payload: tickets });
 		}
-	}, [tickets, status, searchParam, queues, profile]);
+	}, [tickets, queues, profile]);
 
   useEffect(() => {
     const socket = openSocket();
 
-    const shouldUpdateTicket = (ticket) =>
+    const shouldUpdateTicket = (ticket) => !searchParam &&
       (!ticket.userId || ticket.userId === user?.id || showAll) &&
       (!ticket.queueId || selectedQueueIds.indexOf(ticket.queueId) > -1);
 
@@ -256,7 +256,7 @@ const TicketsList = (props) => {
     return () => {
       socket.disconnect();
     };
-  }, [status, showAll, user, selectedQueueIds]);
+  }, [status, searchParam, showAll, user, selectedQueueIds]);
 
   useEffect(() => {
     if (typeof updateCount === "function") {
@@ -275,6 +275,7 @@ const TicketsList = (props) => {
     const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
 
     if (scrollHeight - (scrollTop + 100) < clientHeight) {
+      e.currentTarget.scrollTop = scrollTop - 100;
       loadMore();
     }
   };
