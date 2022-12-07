@@ -4,6 +4,7 @@ import Contact from "../../models/Contact";
 import { logger } from "../../utils/logger";
 import ShowBaileysService from "../BaileysServices/ShowBaileysService";
 import CreateContactService from "../ContactServices/CreateContactService";
+import { isString, isArray } from "lodash";
 
 const ImportContactsService = async (userId: number): Promise<void> => {
   const defaultWhatsapp = await GetDefaultWhatsApp(userId);
@@ -49,25 +50,31 @@ const ImportContactsService = async (userId: number): Promise<void> => {
   }
 
   if (phoneContacts && wbot.type === "md") {
-    phoneContacts.forEach(async ({ id, name }) => {
-      if (id === "status@broadcast" || id.includes("g.us") === "g.us") return;
-      const number = id.replace(/\D/g, "");
+    const phoneContactsList = isString(phoneContacts)
+      ? JSON.parse(phoneContacts)
+      : phoneContacts;
 
-      const numberExists = await Contact.findOne({
-        where: { number }
-      });
+      if (isArray(phoneContactsList)) {
+        phoneContactsList.forEach(async ({ id, name }) => {
+          if (id === "status@broadcast" || id.includes("g.us") === "g.us") return;
+          const number = id.replace(/\D/g, "");
 
-      if (!numberExists) {
-        try {
-          await CreateContactService({ number, name });
-        } catch (error) {
-          console.log(error);
-          logger.warn(
-            `Could not get whatsapp contacts from phone. Err: ${error}`
-          );
-        }
-      }
-    });
+          const numberExists = await Contact.findOne({
+            where: { number }
+          });
+
+          if (!numberExists) {
+            try {
+              await CreateContactService({ number, name });
+            } catch (error) {
+              console.log(error);
+              logger.warn(
+                `Could not get whatsapp contacts from phone. Err: ${error}`
+              );
+            }
+          }
+        });
+      }              
   }
 };
 
