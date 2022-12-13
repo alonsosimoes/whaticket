@@ -4,8 +4,6 @@ import type {
   SignalDataTypeMap
 } from "@adiwajshing/baileys";
 import { BufferJSON, initAuthCreds, proto } from "@adiwajshing/baileys";
-import * as Sentry from "@sentry/node";
-
 import Whatsapp from "../models/Whatsapp";
 
 const KEY_MAP: { [T in keyof SignalDataTypeMap]: string } = {
@@ -29,9 +27,11 @@ const authState = async (
         session: JSON.stringify({ creds, keys }, BufferJSON.replacer, 0)
       });
     } catch (error) {
-      Sentry.captureException(error);
+      console.log(error);
     }
   };
+
+  // const getSessionDatabase = await whatsappById(whatsapp.id);
 
   if (whatsapp.session && whatsapp.session !== null) {
     const result = JSON.parse(whatsapp.session, BufferJSON.reviver);
@@ -54,21 +54,18 @@ const authState = async (
               if (type === "app-state-sync-key") {
                 value = proto.Message.AppStateSyncKeyData.fromObject(value);
               }
-
               dict[id] = value;
             }
-
             return dict;
           }, {});
         },
         set: (data: any) => {
-          for (const _key in data) {
-            const key = KEY_MAP[_key as keyof SignalDataTypeMap];
-            keys[key] = keys[key];
-            if (!keys[key]) keys[key] = {};
-            Object.assign(keys[key], data[_key]);
+          // eslint-disable-next-line no-restricted-syntax, guard-for-in
+          for (const i in data) {
+            const key = KEY_MAP[i as keyof SignalDataTypeMap];
+            keys[key] = keys[key] || {};
+            Object.assign(keys[key], data[i]);
           }
-
           saveState();
         }
       }

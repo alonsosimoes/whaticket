@@ -29,7 +29,8 @@ const DeleteWhatsAppMessage = async (messageId: string): Promise<Message> => {
     const messageDelete = messageToDelete as proto.WebMessageInfo;
 
     if (wbot.type === "legacy") {
-      await (wbot as WALegacySocket).sendMessage(messageDelete.key.remoteJid, {
+      const remoteJid = messageDelete.key.remoteJid as string;
+      await (wbot as WALegacySocket).sendMessage(remoteJid, {
         delete: messageDelete.key
       });
     }
@@ -47,9 +48,9 @@ const DeleteWhatsAppMessage = async (messageId: string): Promise<Message> => {
       });
     }
   } catch (err) {
+    console.log(err);
     throw new AppError("ERR_DELETE_WAPP_MSG");
   }
-
   await message.update({ isDeleted: true });
 
   return message;
