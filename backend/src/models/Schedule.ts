@@ -10,7 +10,6 @@ import {
   BelongsTo,
   ForeignKey
 } from "sequelize-typescript";
-import Company from "./Company";
 import Contact from "./Contact";
 import Ticket from "./Ticket";
 import User from "./User";
@@ -43,10 +42,6 @@ class Schedule extends Model<Schedule> {
   @Column
   userId: number;
 
-  @ForeignKey(() => Company)
-  @Column
-  companyId: number;
-
   @Column(DataType.STRING)
   status: string;
 
@@ -64,9 +59,6 @@ class Schedule extends Model<Schedule> {
 
   @BelongsTo(() => User)
   user: User;
-
-  @BelongsTo(() => Company)
-  company: Company;
 }
 
 export default Schedule;

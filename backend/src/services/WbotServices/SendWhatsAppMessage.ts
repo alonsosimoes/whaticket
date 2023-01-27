@@ -1,5 +1,4 @@
-import { WALegacySocket, WAMessage } from "@adiwajshing/baileys";
-import * as Sentry from "@sentry/node";
+import { WAMessage } from "@adiwajshing/baileys";
 import AppError from "../../errors/AppError";
 import GetTicketWbot from "../../helpers/GetTicketWbot";
 import Message from "../../models/Message";
@@ -24,37 +23,22 @@ const SendWhatsAppMessage = async ({
     ticket.isGroup ? "g.us" : "s.whatsapp.net"
   }`;
   if (quotedMsg) {
-    if (wbot.type === "legacy") {
-      const chatMessages = await (wbot as WALegacySocket).loadMessageFromWA(
-        number,
-        quotedMsg.id
-      );
-
-      options = {
-        quoted: chatMessages
-      };
-    }
-
-    if (wbot.type === "md") {
-      const chatMessages = await Message.findOne({
-        where: {
-          id: quotedMsg.id
-        }
-      });
-
-      if (chatMessages) {
-        const msgFound = JSON.parse(chatMessages.dataJson);
-
-        options = {
-          quoted: {
-            key: msgFound.key,
-            message: {
-              extendedTextMessage: msgFound.message.extendedTextMessage
-            }
-          }
-        };
+    const chatMessages = await Message.findOne({
+      where: {
+        id: quotedMsg.id
       }
-    }
+    });
+
+    const msgFound = JSON.parse(JSON.stringify(chatMessages.dataJson));
+
+    options = {
+      quoted: {
+        key: msgFound.key,
+        message: {
+          extendedTextMessage: msgFound.message.extendedTextMessage
+        }
+      }
+    };
   }
 
   try {
@@ -70,8 +54,6 @@ const SendWhatsAppMessage = async ({
     await ticket.update({ lastMessage: formatBody(body, ticket.contact) });
     return sentMessage;
   } catch (err) {
-    Sentry.captureException(err);
-    console.log(err);
     throw new AppError("ERR_SENDING_WAPP_MSG");
   }
 };

@@ -1,44 +1,31 @@
 import { Sequelize } from "sequelize-typescript";
-import User from "../models/User";
-import Setting from "../models/Setting";
+import Baileys from "../models/Baileys";
+import BaileysSessions from "../models/BaileysSessions";
+import Chatbot from "../models/Chatbot";
 import Contact from "../models/Contact";
-import Ticket from "../models/Ticket";
-import Whatsapp from "../models/Whatsapp";
 import ContactCustomField from "../models/ContactCustomField";
+import DialogChatBots from "../models/DialogChatBots";
+// import dbConfig from "../config/database";
+import MassMessages from "../models/MassMessages";
 import Message from "../models/Message";
 import Queue from "../models/Queue";
-import WhatsappQueue from "../models/WhatsappQueue";
-import UserQueue from "../models/UserQueue";
-import Company from "../models/Company";
-import Plan from "../models/Plan";
-import TicketNote from "../models/TicketNote";
-import QuickMessage from "../models/QuickMessage";
-import Help from "../models/Help";
-import TicketTraking from "../models/TicketTraking";
-import UserRating from "../models/UserRating";
-import QueueOption from "../models/QueueOption";
+import QuickAnswer from "../models/QuickAnswer";
 import Schedule from "../models/Schedule";
+import Setting from "../models/Setting";
+import SettingMessage from "../models/SettingMessage";
 import Tag from "../models/Tag";
+import Ticket from "../models/Ticket";
 import TicketTag from "../models/TicketTag";
-import ContactList from "../models/ContactList";
-import ContactListItem from "../models/ContactListItem";
-import Campaign from "../models/Campaign";
-import CampaignSetting from "../models/CampaignSetting";
-import Baileys from "../models/Baileys";
-import CampaignShipping from "../models/CampaignShipping";
-import Announcement from "../models/Announcement";
-import Chat from "../models/Chat";
-import ChatUser from "../models/ChatUser";
-import ChatMessage from "../models/ChatMessage";
-
+import User from "../models/User";
+import UserQueue from "../models/UserQueue";
+import Whatsapp from "../models/Whatsapp";
+import WhatsappQueue from "../models/WhatsappQueue";
 // eslint-disable-next-line
 const dbConfig = require("../config/database");
-// import dbConfig from "../config/database";
 
 const sequelize = new Sequelize(dbConfig);
 
 const models = [
-  Company,
   User,
   Contact,
   Ticket,
@@ -49,26 +36,16 @@ const models = [
   Queue,
   WhatsappQueue,
   UserQueue,
-  Plan,
-  TicketNote,
-  QuickMessage,
-  Help,
-  TicketTraking,
-  UserRating,
-  QueueOption,
+  QuickAnswer,
+  Baileys,
+  Chatbot,
+  DialogChatBots,
   Schedule,
   Tag,
   TicketTag,
-  ContactList,
-  ContactListItem,
-  Campaign,
-  CampaignSetting,
-  Baileys,
-  CampaignShipping,
-  Announcement,
-  Chat,
-  ChatUser,
-  ChatMessage
+  SettingMessage,
+  MassMessages,
+  BaileysSessions
 ];
 
 sequelize.addModels(models);

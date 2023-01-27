@@ -1,8 +1,7 @@
 import { getIO } from "../../libs/socket";
 import Contact from "../../models/Contact";
-import ContactCustomField from "../../models/ContactCustomField";
 
-interface ExtraInfo extends ContactCustomField {
+interface ExtraInfo {
   name: string;
   value: string;
 }
@@ -13,7 +12,6 @@ interface Request {
   isGroup: boolean;
   email?: string;
   profilePicUrl?: string;
-  companyId: number;
   extraInfo?: ExtraInfo[];
 }
 
@@ -23,7 +21,6 @@ const CreateOrUpdateContactService = async ({
   profilePicUrl,
   isGroup,
   email = "",
-  companyId,
   extraInfo = []
 }: Request): Promise<Contact> => {
   const number = isGroup ? rawNumber : rawNumber.replace(/[^0-9]/g, "");
@@ -31,35 +28,39 @@ const CreateOrUpdateContactService = async ({
   const io = getIO();
   let contact: Contact | null;
 
-  contact = await Contact.findOne({
-    where: {
-      number,
-      companyId
-    }
-  });
+  contact = await Contact.findOne({ where: { number } });
 
   if (contact) {
-    contact.update({ profilePicUrl });
+    try {
+      await contact.update({ profilePicUrl });
 
-    io.emit(`company-${companyId}-contact`, {
-      action: "update",
-      contact
-    });
-  } else {
-    contact = await Contact.create({
-      name,
-      number,
-      profilePicUrl,
-      email,
-      isGroup,
-      extraInfo,
-      companyId
-    });
+      io.emit("contact", {
+        action: "update",
+        contact
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  }
 
-    io.emit(`company-${companyId}-contact`, {
-      action: "create",
-      contact
-    });
+  if (!contact) {
+    try {
+      contact = await Contact.create({
+        name,
+        number,
+        profilePicUrl,
+        email,
+        isGroup,
+        extraInfo
+      });
+
+      io.emit("contact", {
+        action: "create",
+        contact
+      });
+    } catch (error) {
+      console.log(error);
+    }
   }
 
   return contact;

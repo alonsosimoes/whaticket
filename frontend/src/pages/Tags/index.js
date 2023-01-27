@@ -1,11 +1,6 @@
-import React, {
-  useState,
-  useEffect,
-  useReducer,
-  useCallback,
-  useContext,
-} from "react";
+import React, { useState, useEffect, useReducer, useCallback } from "react";
 import { toast } from "react-toastify";
+import openSocket from "socket.io-client";
 
 import { makeStyles } from "@material-ui/core/styles";
 import Paper from "@material-ui/core/Paper";
@@ -35,8 +30,6 @@ import TagModal from "../../components/TagModal";
 import ConfirmationModal from "../../components/ConfirmationModal";
 import toastError from "../../errors/toastError";
 import { Chip } from "@material-ui/core";
-import { socketConnection } from "../../services/socket";
-import { AuthContext } from "../../context/Auth/AuthContext";
 
 const reducer = (state, action) => {
   if (action.type === "LOAD_TAGS") {
@@ -94,8 +87,6 @@ const useStyles = makeStyles((theme) => ({
 const Tags = () => {
   const classes = useStyles();
 
-  const { user } = useContext(AuthContext);
-
   const [loading, setLoading] = useState(false);
   const [pageNumber, setPageNumber] = useState(1);
   const [hasMore, setHasMore] = useState(false);
@@ -106,7 +97,7 @@ const Tags = () => {
   const [tags, dispatch] = useReducer(reducer, []);
   const [tagModalOpen, setTagModalOpen] = useState(false);
 
-  const fetchTags = useCallback(async () => {
+  const fetchTags = useCallback(async() => {
     try {
       const { data } = await api.get("/tags/", {
         params: { searchParam, pageNumber },
@@ -133,7 +124,7 @@ const Tags = () => {
   }, [searchParam, pageNumber, fetchTags]);
 
   useEffect(() => {
-    const socket = socketConnection({ companyId: user.companyId });
+    const socket = openSocket(process.env.REACT_APP_BACKEND_URL);
 
     socket.on("user", (data) => {
       if (data.action === "update" || data.action === "create") {
@@ -148,7 +139,7 @@ const Tags = () => {
     return () => {
       socket.disconnect();
     };
-  }, [user]);
+  }, []);
 
   const handleOpenTagModal = () => {
     setSelectedTag(null);
@@ -200,7 +191,10 @@ const Tags = () => {
   return (
     <MainContainer>
       <ConfirmationModal
-        title={deletingTag && `${i18n.t("tags.confirmationModal.deleteTitle")}`}
+        title={
+          deletingTag &&
+          `${i18n.t("tags.confirmationModal.deleteTitle")}`
+        }
         open={confirmModalOpen}
         onClose={setConfirmModalOpen}
         onConfirm={() => handleDeleteTag(deletingTag.id)}
@@ -215,29 +209,29 @@ const Tags = () => {
         tagId={selectedTag && selectedTag.id}
       />
       <MainHeader>
-        <Title>{i18n.t("tags.title")}</Title>
-        <MainHeaderButtonsWrapper>
-          <TextField
-            placeholder={i18n.t("contacts.searchPlaceholder")}
-            type="search"
-            value={searchParam}
-            onChange={handleSearch}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon style={{ color: "gray" }} />
-                </InputAdornment>
-              ),
-            }}
-          />
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={handleOpenTagModal}
-          >
-            {i18n.t("tags.buttons.add")}
-          </Button>
-        </MainHeaderButtonsWrapper>
+      <Title>{i18n.t("tags.title")}</Title>
+      <MainHeaderButtonsWrapper>
+        <TextField
+          placeholder={i18n.t("contacts.searchPlaceholder")}
+          type="search"
+          value={searchParam}
+          onChange={handleSearch}
+          InputProps={{
+            startAdornment: (
+            <InputAdornment position="start">
+                <SearchIcon style={{ color: "gray" }} />
+            </InputAdornment>
+            ),
+          }}
+        />
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={handleOpenTagModal}
+        >
+          {i18n.t("tags.buttons.add")}
+        </Button>
+      </MainHeaderButtonsWrapper>
       </MainHeader>
       <Paper
         className={classes.mainPaper}
@@ -248,50 +242,45 @@ const Tags = () => {
           <TableHead>
             <TableRow>
               <TableCell align="center">{i18n.t("tags.table.name")}</TableCell>
-              <TableCell align="center">
-                {i18n.t("tags.table.tickets")}
-              </TableCell>
-              <TableCell align="center">
-                {i18n.t("tags.table.actions")}
-              </TableCell>
+              <TableCell align="center">{i18n.t("tags.table.tickets")}</TableCell>
+              <TableCell align="center">{i18n.t("tags.table.actions")}</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            <>
-              {tags.map((tag) => (
-                <TableRow key={tag.id}>
-                  <TableCell align="center">
-                    <Chip
-                      variant="outlined"
-                      style={{
-                        backgroundColor: tag.color,
-                        textShadow: "1px 1px 1px #000",
-                        color: "white",
-                      }}
-                      label={tag.name}
-                      size="small"
-                    />
-                  </TableCell>
-                  <TableCell align="center">{tag.ticketsCount}</TableCell>
-                  <TableCell align="center">
-                    <IconButton size="small" onClick={() => handleEditTag(tag)}>
-                      <EditIcon />
-                    </IconButton>
+              <>
+                {tags.map((tag) => (
+                  <TableRow key={tag.id}>
+                    <TableCell align="center">
+                      <Chip
+                        variant="outlined"
+                        style={{backgroundColor: tag.color, textShadow: '1px 1px 1px #000', color: 'white'}}
+                        label={tag.name}
+                        size="small"
+                      />
+                    </TableCell>
+                    <TableCell align="center">{tag.ticketsCount}</TableCell>
+                    <TableCell align="center">
+                      <IconButton
+                        size="small"
+                        onClick={() => handleEditTag(tag)}
+                      >
+                        <EditIcon />
+                      </IconButton>
 
-                    <IconButton
-                      size="small"
-                      onClick={(e) => {
-                        setConfirmModalOpen(true);
-                        setDeletingTag(tag);
-                      }}
-                    >
-                      <DeleteOutlineIcon />
-                    </IconButton>
-                  </TableCell>
-                </TableRow>
-              ))}
-              {loading && <TableRowSkeleton columns={4} />}
-            </>
+                      <IconButton
+                        size="small"
+                        onClick={(e) => {
+                          setConfirmModalOpen(true);
+                          setDeletingTag(tag);
+                        }}
+                      >
+                        <DeleteOutlineIcon />
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {loading && <TableRowSkeleton columns={4} />}
+              </>
           </TableBody>
         </Table>
       </Paper>

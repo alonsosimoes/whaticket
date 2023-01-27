@@ -9,19 +9,14 @@ import {
   AllowNull,
   Unique,
   BelongsToMany,
-  BelongsTo,
-  ForeignKey,
-  HasMany,
-  DataType,
-  Default
+  HasMany
 } from "sequelize-typescript";
+import Chatbot from "./Chatbot";
 import User from "./User";
 import UserQueue from "./UserQueue";
-import Company from "./Company";
 
 import Whatsapp from "./Whatsapp";
 import WhatsappQueue from "./WhatsappQueue";
-import QueueOption from "./QueueOption";
 
 @Table
 class Queue extends Model<Queue> {
@@ -40,18 +35,8 @@ class Queue extends Model<Queue> {
   @Column
   color: string;
 
-  @Default("")
   @Column
   greetingMessage: string;
-
-  @Default("")
-  @Column
-  outOfHoursMessage: string;
-
-  @Column({
-    type: DataType.JSONB
-  })
-  schedules: [];
 
   @CreatedAt
   createdAt: Date;
@@ -59,25 +44,14 @@ class Queue extends Model<Queue> {
   @UpdatedAt
   updatedAt: Date;
 
-  @ForeignKey(() => Company)
-  @Column
-  companyId: number;
-
-  @BelongsTo(() => Company)
-  company: Company;
-
   @BelongsToMany(() => Whatsapp, () => WhatsappQueue)
   whatsapps: Array<Whatsapp & { WhatsappQueue: WhatsappQueue }>;
 
   @BelongsToMany(() => User, () => UserQueue)
   users: Array<User & { UserQueue: UserQueue }>;
 
-  @HasMany(() => QueueOption, {
-    onDelete: "DELETE",
-    onUpdate: "DELETE",
-    hooks: true
-  })
-  options: QueueOption[];
+  @HasMany(() => Chatbot)
+  chatbots: Chatbot[];
 }
 
 export default Queue;

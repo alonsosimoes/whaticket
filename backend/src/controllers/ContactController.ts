@@ -7,16 +7,13 @@ import CreateContactService from "../services/ContactServices/CreateContactServi
 import ShowContactService from "../services/ContactServices/ShowContactService";
 import UpdateContactService from "../services/ContactServices/UpdateContactService";
 import DeleteContactService from "../services/ContactServices/DeleteContactService";
-import GetContactService from "../services/ContactServices/GetContactService";
 
 import CheckContactNumber from "../services/WbotServices/CheckNumber";
 import CheckIsValidContact from "../services/WbotServices/CheckIsValidContact";
 import GetProfilePicUrl from "../services/WbotServices/GetProfilePicUrl";
 import AppError from "../errors/AppError";
-import SimpleListService, {
-  SearchContactParams
-} from "../services/ContactServices/SimpleListService";
-import ContactCustomField from "../models/ContactCustomField";
+import GetContactService from "../services/ContactServices/GetContactService";
+import SimpleListService, { SearchContactParams } from "../services/ContactServices/SimpleListService";
 
 type IndexQuery = {
   searchParam: string;
@@ -28,7 +25,7 @@ type IndexGetContactQuery = {
   number: string;
 };
 
-interface ExtraInfo extends ContactCustomField {
+interface ExtraInfo {
   name: string;
   value: string;
 }
@@ -41,12 +38,10 @@ interface ContactData {
 
 export const index = async (req: Request, res: Response): Promise<Response> => {
   const { searchParam, pageNumber } = req.query as IndexQuery;
-  const { companyId } = req.user;
 
   const { contacts, count, hasMore } = await ListContactsService({
     searchParam,
-    pageNumber,
-    companyId
+    pageNumber
   });
 
   return res.json({ contacts, count, hasMore });
@@ -57,19 +52,16 @@ export const getContact = async (
   res: Response
 ): Promise<Response> => {
   const { name, number } = req.body as IndexGetContactQuery;
-  const { companyId } = req.user;
 
   const contact = await GetContactService({
     name,
-    number,
-    companyId
+    number
   });
 
   return res.status(200).json(contact);
 };
 
 export const store = async (req: Request, res: Response): Promise<Response> => {
-  const { companyId } = req.user;
   const newContact: ContactData = req.body;
   newContact.number = newContact.number.replace("-", "").replace(" ", "");
 
@@ -82,28 +74,27 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
 
   try {
     await schema.validate(newContact);
-  } catch (err: any) {
+  } catch (err) {
     throw new AppError(err.message);
   }
 
-  await CheckIsValidContact(newContact.number, companyId);
-  const validNumber = await CheckContactNumber(newContact.number, companyId);
-  const number = validNumber.jid.replace(/\D/g, "");
-  newContact.number = number;
+  await CheckIsValidContact(newContact.number);
+  const validNumber = await CheckContactNumber(newContact.number);
 
-  /**
-   * Código desabilitado por demora no retorno
-   */
-  // const profilePicUrl = await GetProfilePicUrl(validNumber.jid, companyId);
+  const profilePicUrl = await GetProfilePicUrl(validNumber);
+
+  const { name, extraInfo, email } = newContact;
 
   const contact = await CreateContactService({
-    ...newContact,
-    // profilePicUrl,
-    companyId
+    name,
+    number: validNumber,
+    email,
+    extraInfo,
+    profilePicUrl
   });
 
   const io = getIO();
-  io.emit(`company-${companyId}-contact`, {
+  io.emit("contact", {
     action: "create",
     contact
   });
@@ -113,9 +104,8 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
 
 export const show = async (req: Request, res: Response): Promise<Response> => {
   const { contactId } = req.params;
-  const { companyId } = req.user;
 
-  const contact = await ShowContactService(contactId, companyId);
+  const contact = await ShowContactService(contactId);
 
   return res.status(200).json(contact);
 };
@@ -125,7 +115,6 @@ export const update = async (
   res: Response
 ): Promise<Response> => {
   const contactData: ContactData = req.body;
-  const { companyId } = req.user;
 
   const schema = Yup.object().shape({
     name: Yup.string(),
@@ -137,25 +126,18 @@ export const update = async (
 
   try {
     await schema.validate(contactData);
-  } catch (err: any) {
+  } catch (err) {
     throw new AppError(err.message);
   }
 
-  await CheckIsValidContact(contactData.number, companyId);
-  const validNumber = await CheckContactNumber(contactData.number, companyId);
-  const number = validNumber.jid.replace(/\D/g, "");
-  contactData.number = number;
+  await CheckIsValidContact(contactData.number);
 
   const { contactId } = req.params;
 
-  const contact = await UpdateContactService({
-    contactData,
-    contactId,
-    companyId
-  });
+  const contact = await UpdateContactService({ contactData, contactId });
 
   const io = getIO();
-  io.emit(`company-${companyId}-contact`, {
+  io.emit("contact", {
     action: "update",
     contact
   });
@@ -168,14 +150,11 @@ export const remove = async (
   res: Response
 ): Promise<Response> => {
   const { contactId } = req.params;
-  const { companyId } = req.user;
-
-  await ShowContactService(contactId, companyId);
 
   await DeleteContactService(contactId);
 
   const io = getIO();
-  io.emit(`company-${companyId}-contact`, {
+  io.emit("contact", {
     action: "delete",
     contactId
   });
@@ -185,9 +164,13 @@ export const remove = async (
 
 export const list = async (req: Request, res: Response): Promise<Response> => {
   const { name } = req.query as unknown as SearchContactParams;
-  const { companyId } = req.user;
 
-  const contacts = await SimpleListService({ name, companyId });
+  try {
+    const contacts = await SimpleListService({ name });
 
-  return res.json(contacts);
+    return res.json(contacts);
+  } catch (err) {
+    throw new AppError(err.message);
+  }
 };
+

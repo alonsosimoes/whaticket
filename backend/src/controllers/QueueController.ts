@@ -5,42 +5,25 @@ import DeleteQueueService from "../services/QueueService/DeleteQueueService";
 import ListQueuesService from "../services/QueueService/ListQueuesService";
 import ShowQueueService from "../services/QueueService/ShowQueueService";
 import UpdateQueueService from "../services/QueueService/UpdateQueueService";
-import { isNil } from "lodash";
-
-type QueueFilter = {
-  companyId: number;
-};
 
 export const index = async (req: Request, res: Response): Promise<Response> => {
-  const { companyId: userCompanyId } = req.user;
-  const { companyId: queryCompanyId } = req.query as unknown as QueueFilter;
-  let companyId = userCompanyId;
-
-  if (!isNil(queryCompanyId)) {
-    companyId = +queryCompanyId;
-  }
-
-  const queues = await ListQueuesService({ companyId });
+  const queues = await ListQueuesService();
 
   return res.status(200).json(queues);
 };
 
 export const store = async (req: Request, res: Response): Promise<Response> => {
-  const { name, color, greetingMessage, outOfHoursMessage, schedules } =
-    req.body;
-  const { companyId } = req.user;
+  const { name, color, greetingMessage, chatbots } = req.body;
 
   const queue = await CreateQueueService({
     name,
     color,
     greetingMessage,
-    companyId,
-    outOfHoursMessage,
-    schedules
+    chatbots
   });
 
   const io = getIO();
-  io.emit(`company-${companyId}-queue`, {
+  io.emit("queue", {
     action: "update",
     queue
   });
@@ -50,9 +33,8 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
 
 export const show = async (req: Request, res: Response): Promise<Response> => {
   const { queueId } = req.params;
-  const { companyId } = req.user;
 
-  const queue = await ShowQueueService(queueId, companyId);
+  const queue = await ShowQueueService(queueId);
 
   return res.status(200).json(queue);
 };
@@ -62,12 +44,11 @@ export const update = async (
   res: Response
 ): Promise<Response> => {
   const { queueId } = req.params;
-  const { companyId } = req.user;
 
-  const queue = await UpdateQueueService(queueId, req.body, companyId);
+  const queue = await UpdateQueueService(queueId, req.body);
 
   const io = getIO();
-  io.emit(`company-${companyId}-queue`, {
+  io.emit("queue", {
     action: "update",
     queue
   });
@@ -80,12 +61,11 @@ export const remove = async (
   res: Response
 ): Promise<Response> => {
   const { queueId } = req.params;
-  const { companyId } = req.user;
 
-  await DeleteQueueService(queueId, companyId);
+  await DeleteQueueService(queueId);
 
   const io = getIO();
-  io.emit(`company-${companyId}-queue`, {
+  io.emit("queue", {
     action: "delete",
     queueId: +queueId
   });
