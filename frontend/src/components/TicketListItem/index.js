@@ -99,21 +99,6 @@ const useStyles = makeStyles((theme) => ({
     top: "0%",
     left: "0%",
   },
-
-  userTag: {
-    position: "absolute",
-    marginRight: 5,
-    right: 5,
-    bottom: 5,
-    background: "#2576D2",
-    color: "#ffffff",
-    border: "1px solid #CCC",
-    padding: 1,
-    paddingLeft: 5,
-    paddingRight: 5,
-    borderRadius: 10,
-    fontSize: "0.9em",
-  },
 }));
 
 const TicketListItem = ({ ticket }) => {
@@ -130,10 +115,10 @@ const TicketListItem = ({ ticket }) => {
     };
   }, []);
 
-  const handleAcepptTicket = async (id) => {
+  const handleAcepptTicket = async (ticket) => {
     setLoading(true);
     try {
-      await api.put(`/tickets/${id}`, {
+      await api.put(`/tickets/${ticket.id}`, {
         status: "open",
         userId: user?.id,
       });
@@ -144,11 +129,11 @@ const TicketListItem = ({ ticket }) => {
     if (isMounted.current) {
       setLoading(false);
     }
-    history.push(`/tickets/${id}`);
+    history.push(`/tickets/${ticket.uuid}`);
   };
 
-  const handleSelectTicket = (id) => {
-    history.push(`/tickets/${id}`);
+  const handleSelectTicket = (ticket) => {
+    history.push(`/tickets/${ticket.uuid}`);
   };
 
   return (
@@ -158,7 +143,7 @@ const TicketListItem = ({ ticket }) => {
         button
         onClick={(e) => {
           if (ticket.status === "pending") return;
-          handleSelectTicket(ticket.id);
+          handleSelectTicket(ticket);
         }}
         selected={ticketId && +ticketId === ticket.id}
         className={clsx(classes.ticket, {
@@ -211,23 +196,6 @@ const TicketListItem = ({ ticket }) => {
                   )}
                 </Typography>
               )}
-              {ticket.whatsappId && (
-                <div
-                  className={classes.userTag}
-                  title={i18n.t("ticketsList.connectionTitle")}
-                >
-                  {ticket.whatsapp?.name}
-                </div>
-              )}
-
-              {ticket.channel !== "whatsapp" && (
-                <div
-                  className={classes.userTag}
-                  title={i18n.t("ticketsList.connectionTitle")}
-                >
-                  {ticket.channel}
-                </div>
-              )}
             </span>
           }
           secondary={
@@ -263,7 +231,7 @@ const TicketListItem = ({ ticket }) => {
             className={classes.acceptButton}
             size="small"
             loading={loading}
-            onClick={(e) => handleAcepptTicket(ticket.id)}
+            onClick={(e) => handleAcepptTicket(ticket)}
           >
             {i18n.t("ticketsList.buttons.accept")}
           </ButtonWithSpinner>
