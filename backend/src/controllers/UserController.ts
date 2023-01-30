@@ -27,13 +27,11 @@ export const index = async (req: Request, res: Response): Promise<Response> => {
 };
 
 export const store = async (req: Request, res: Response): Promise<Response> => {
-
-  const { users } = await ListUsersService({});
+    const { users } = await ListUsersService({});
 
   if (users.length >= Number(process.env.USER_LIMIT)) {
     throw new AppError("ERR_NO_PERMISSION", 403);
   }
-
   const { email, password, name, profile, queueIds, whatsappId } = req.body;
 
   if (
@@ -75,7 +73,7 @@ export const update = async (
   req: Request,
   res: Response
 ): Promise<Response> => {
-  if (req.user.profile !== "admin" && req.user.profile !== "user") {
+  if (req.user.profile !== "admin") {
     throw new AppError("ERR_NO_PERMISSION", 403);
   }
 

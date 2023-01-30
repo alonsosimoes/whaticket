@@ -135,7 +135,7 @@ const TransferTicketModal = ({ modalOpen, onClose, ticketid, ticketWhatsappId })
 					{i18n.t("transferTicketModal.title")}
 				</DialogTitle>
 				<DialogContent dividers>
-					<Autocomplete
+					<setSelectedUser
 						style={{ width: 300, marginBottom: 20 }}
 						getOptionLabel={option => `${option.name}`}
 						onChange={(e, newValue) => {

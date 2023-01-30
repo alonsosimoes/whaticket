@@ -13,11 +13,10 @@ import CheckContactNumber from "../services/WbotServices/CheckNumber";
 import GetProfilePicUrl from "../services/WbotServices/GetProfilePicUrl";
 import SendWhatsAppMedia from "../services/WbotServices/SendWhatsAppMedia";
 import SendWhatsAppMessage from "../services/WbotServices/SendWhatsAppMessage";
-import UpdateTicketService from "../services/TicketServices/UpdateTicketService";
 
 type WhatsappData = {
   whatsappId: number;
-}
+};
 
 type MessageData = {
   body: string;
@@ -37,10 +36,11 @@ const createContact = async (
   await CheckIsValidContact(newContact);
 
   const validNumber: any = await CheckContactNumber(newContact);
+  const profilePicUrl = await GetProfilePicUrl(
+    validNumber
+  );
 
-  const profilePicUrl = await GetProfilePicUrl(validNumber);
-
-  const number = validNumber;
+  const number = validNumber
 
   const contactData = {
     name: `${number}`,
@@ -62,7 +62,7 @@ const createContact = async (
       throw new AppError(`whatsapp #${whatsappId} not found`);
     }
   }
-  
+
   const createTicket = await FindOrCreateTicketService({
     whatsappId: whatsapp.id,
     contact,
@@ -109,11 +109,5 @@ export const index = async (req: Request, res: Response): Promise<Response> => {
     await SendWhatsAppMessage({ body, ticket: contactAndTicket, quotedMsg });
   }
 
-  setTimeout(async () => {
-    await UpdateTicketService({
-      ticketId: contactAndTicket.id,
-      ticketData: { status: "closed" }
-    });
-  }, 1000);
-  return res.send({ error: "SUCCESS" });
+  return res.send();
 };

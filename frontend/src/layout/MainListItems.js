@@ -166,19 +166,17 @@ const MainListItems = (props) => {
             />
           <Divider />
             <ListSubheader inset>
-              {i18n.t("mainDrawer.listItems.api")}
+              {i18n.t("API")}
             </ListSubheader>
        
            <ListItemLink
               to="/tokens"
-              primary={i18n.t("mainDrawer.listItems.tokens")}
+              primary={i18n.t("TOKEN")}
               icon={<VpnKeyIcon />}
             />
-
-         
-              <ListItemLink
+                <ListItemLink
               to="/docs"
-              primary={i18n.t("mainDrawer.listItems.docs")}
+              primary="Manual"
               icon={<MenuBookIcon />}
             />
 

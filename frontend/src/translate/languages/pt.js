@@ -28,10 +28,6 @@ const messages = {
           register: "Não tem um conta? Cadastre-se!",
         },
       },
-      copyright: {
-        title: "Whaticket",
-      },
-
       auth: {
         toasts: {
           success: "Login efetuado com sucesso!",
@@ -40,7 +36,7 @@ const messages = {
       dashboard: {
         charts: {
           perDay: {
-            title: "Tickets hoje: ",
+            title: "Atendimentos hoje: ",
           },
         },
         messages: {
@@ -114,10 +110,10 @@ const messages = {
           default: "Padrão",
           farewellMessage: "Mensagem de despedida",
           isMultidevice: "Multidevice",
-          transferTicketMessage: "Mensagem de Transferência do Ticket",
-          reopenLastTicket: "Reabrir Ultimo Ticket",
+          transferTicketMessage: "Mensagem de Transferência do Atendimento",
+          reopenLastTicket: "Reabrir Ultimo Chamado",
           minutes: "Minutos",
-          newticketafter: "Gerar um Novo Ticket após",
+          newticketafter: "Gerar um Novo Atendimento após",
           titlenewticketafter: "Ao receber uma mensagem",
         },
         buttons: {
@@ -140,7 +136,7 @@ const messages = {
           deleteTitle: "Deletar ",
           importTitlte: "Importar contatos",
           deleteMessage:
-            "Tem certeza que deseja deletar este contato? Todos os tickets relacionados serão perdidos.",
+            "Tem certeza que deseja deletar este contato? Todos os atendimentos relacionados serão perdidos.",
           importMessage: "Deseja importas todos os contatos do telefone?",
         },
         buttons: {
@@ -258,7 +254,7 @@ const messages = {
         success: "Tag salvo com sucesso.",
       },
       chat: {
-        noTicketMessage: "Selecione um ticket para começar a conversar.",
+        noTicketMessage: "Selecione um chamado para começar a conversar.",
       },
       ticketsManager: {
         buttons: {
@@ -270,7 +266,7 @@ const messages = {
       },
       tickets: {
         toasts: {
-          deleted: "O ticket que você estava foi deletado.",
+          deleted: "O Atendimento que você estava foi deletado.",
         },
         notification: {
           message: "Mensagem de",
@@ -281,14 +277,14 @@ const messages = {
           search: { title: "Busca" },
         },
         search: {
-          placeholder: "Buscar tickets e mensagens",
+          placeholder: "Buscar Atendimentos e mensagens",
         },
         buttons: {
           showAll: "Todos",
         },
       },
       transferTicketModal: {
-        title: "Transferir Ticket",
+        title: "Transferir Atendimento",
         fieldLabel: "Digite para buscar usuários",
         fieldQueueLabel: "Transferir para fila",
         fieldConnectionLabel: "Transferir para conexão",
@@ -305,14 +301,14 @@ const messages = {
         assignedHeader: "Atendendo",
         noTicketsTitle: "Nada aqui!",
         noTicketsMessage:
-          "Nenhum ticket encontrado com esse status ou termo pesquisado",
+          "Nenhum Atendimento encontrado com esse status ou termo pesquisado",
         connectionTitle: "Conexão que está sendo utilizada atualmente.",
         buttons: {
           accept: "Aceitar",
         },
       },
       newTicketModal: {
-        title: "Criar Ticket",
+        title: "Criar Chamado",
         fieldLabel: "Digite para pesquisar o contato",
         add: "Adicionar",
         buttons: {
@@ -324,21 +320,14 @@ const messages = {
         listItems: {
           dashboard: "Dashboard",
           connections: "Conexões",
-          tickets: "Conversas",
+          tickets: "Atendimentos",
           contacts: "Contatos",
           quickAnswers: "Respostas Rápidas",
           queues: "Filas & Chatbot",
           schedules: "Agendamentos",
           tags: "Tags",
-          api: "API",
-          gerenciarcampanha: "Campanhas",
-          configcampanha: "Config. Campanhas",
-          relatoriocampanha: "Relatório Envios",
-          enviocampanha: "Envio em Massa",
           administration: "Administração",
           users: "Usuários",
-          docs: "Documentação",
-          tokens: "Tokens",
           settings: "Configurações",
         },
         appBar: {
@@ -405,7 +394,7 @@ const messages = {
         confirmationModal: {
           deleteTitle: "Excluir",
           deleteMessage:
-            "Você tem certeza? Essa ação não pode ser revertida! Os tickets dessa fila continuarão existindo, mas não terão mais nenhuma fila atribuída.",
+            "Você tem certeza? Essa ação não pode ser revertida! Os atendimentos dessa fila continuarão existindo, mas não terão mais nenhuma fila atribuída.",
         },
       },
       queueSelect: {
@@ -449,7 +438,7 @@ const messages = {
         confirmationModal: {
           deleteTitle: "Excluir",
           deleteMessage:
-            "Todos os dados do usuário serão perdidos. Os tickets abertos deste usuário serão movidos para a fila.",
+            "Todos os dados do usuário serão perdidos. Os atendimentos abertos deste usuário serão movidos para a fila.",
         },
       },
       tags: {
@@ -485,7 +474,7 @@ const messages = {
           },
           timeCreateNewTicket: {
             name: "Mensagem de boas-vindas após",
-            note: "Selecione o tempo que será necessário para abrir um novo ticket, caso o cliente entre em contatos novamente",
+            note: "Selecione o tempo que será necessário para abrir um novo Chamado, caso o cliente entre em contatos novamente",
             options: {
               "10": "10 Segundos",
               "30": "30 Segundos",
@@ -546,7 +535,7 @@ const messages = {
         confirmationModal: {
           title: "Deletar o ticket do contato",
           message:
-            "Atenção! Todas as mensagens relacionadas ao ticket serão perdidas.",
+            "Atenção! Todas as mensagens relacionadas ao Atendimento serão perdidas.",
         },
         buttons: {
           delete: "Excluir",

@@ -1,8 +1,9 @@
+import AppError from "../errors/AppError";
 import { Request, Response } from "express";
 import { getIO } from "../libs/socket";
 import { removeWbot } from "../libs/wbot";
 import { StartWhatsAppSession } from "../services/WbotServices/StartWhatsAppSession";
-import AppError from "../errors/AppError";
+
 import CreateWhatsAppService from "../services/WhatsappService/CreateWhatsAppService";
 import DeleteWhatsAppService from "../services/WhatsappService/DeleteWhatsAppService";
 import ListWhatsAppsService from "../services/WhatsappService/ListWhatsAppsService";
@@ -42,13 +43,11 @@ export const index = async (req: Request, res: Response): Promise<Response> => {
 };
 
 export const store = async (req: Request, res: Response): Promise<Response> => {
-
-  const WhatsApps = await ListWhatsAppsService();
+    const WhatsApps = await ListWhatsAppsService();
   
   if (WhatsApps.length >= Number(process.env.CONNECTIONS_LIMIT)) {
     throw new AppError("ERR_NO_PERMISSION", 403);
   }
-
   const {
     name,
     status,

@@ -184,19 +184,19 @@ const TicketsList = (props) => {
 
 	useEffect(() => {
 		const queueIds = queues.map((q) => q.id);
-		const filteredTickets = tickets.filter((t) => queueIds.indexOf(t.queueId) > -1 || t.queueId === null);
+		const filteredTickets = tickets.filter((t) => queueIds.indexOf(t.queueId) > -1);
 
 		if (profile === "user") {
 			dispatch({ type: "LOAD_TICKETS", payload: filteredTickets });
 		} else {
 			dispatch({ type: "LOAD_TICKETS", payload: tickets });
 		}
-	}, [tickets, queues, profile]);
+	}, [tickets, status, searchParam, queues, profile]);
 
   useEffect(() => {
     const socket = openSocket();
 
-    const shouldUpdateTicket = (ticket) => !searchParam &&
+    const shouldUpdateTicket = (ticket) =>
       (!ticket.userId || ticket.userId === user?.id || showAll) &&
       (!ticket.queueId || selectedQueueIds.indexOf(ticket.queueId) > -1);
 
@@ -256,7 +256,7 @@ const TicketsList = (props) => {
     return () => {
       socket.disconnect();
     };
-  }, [status, searchParam, showAll, user, selectedQueueIds]);
+  }, [status, showAll, user, selectedQueueIds]);
 
   useEffect(() => {
     if (typeof updateCount === "function") {
@@ -275,7 +275,6 @@ const TicketsList = (props) => {
     const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
 
     if (scrollHeight - (scrollTop + 100) < clientHeight) {
-      e.currentTarget.scrollTop = scrollTop - 100;
       loadMore();
     }
   };
