@@ -11,14 +11,11 @@ import {
   AllowNull,
   HasMany,
   Unique,
-  BelongsToMany,
-  ForeignKey,
-  BelongsTo
+  BelongsToMany
 } from "sequelize-typescript";
 import Queue from "./Queue";
 import Ticket from "./Ticket";
 import WhatsappQueue from "./WhatsappQueue";
-import Company from "./Company";
 
 @Table
 class Whatsapp extends Model<Whatsapp> {
@@ -50,28 +47,15 @@ class Whatsapp extends Model<Whatsapp> {
   @Column
   retries: number;
 
-  @Default("")
   @Column(DataType.TEXT)
   greetingMessage: string;
 
-  @Default("")
   @Column(DataType.TEXT)
   farewellMessage: string;
 
-  @Default("")
-  @Column(DataType.TEXT)
-  complationMessage: string;
-
-  @Default("")
-  @Column(DataType.TEXT)
-  outOfHoursMessage: string;
-
-  @Default("")
-  @Column(DataType.TEXT)
-  ratingMessage: string;
-
-  @Column({ defaultValue: "stable" })
-  provider: string;
+  @Default(false)
+  @Column(DataType.BOOLEAN)
+  isMultidevice: boolean;
 
   @Default(false)
   @AllowNull
@@ -93,15 +77,49 @@ class Whatsapp extends Model<Whatsapp> {
   @HasMany(() => WhatsappQueue)
   whatsappQueues: WhatsappQueue[];
 
-  @ForeignKey(() => Company)
-  @Column
-  companyId: number;
-
-  @BelongsTo(() => Company)
-  company: Company;
+  @Column(DataType.TEXT)
+  transferTicketMessage: string;
 
   @Column
-  token: string;
+  startWorkHour: string;
+
+  @Column
+  endWorkHour: string;
+
+  @AllowNull
+  @Column(DataType.TEXT)
+  startWorkHourWeekend: string;
+
+  @AllowNull
+  @Column
+  endWorkHourWeekend: string;
+
+  @Column
+  defineWorkHours: string;
+
+  @Column
+  monday: boolean;
+
+  @Column
+  tuesday: boolean;
+
+  @Column
+  wednesday: boolean;
+
+  @Column
+  thursday: boolean;
+
+  @Column
+  friday: boolean;
+
+  @Column
+  saturday: boolean;
+
+  @Column
+  sunday: boolean;
+
+  @Column(DataType.TEXT)
+  outOfWorkMessage: string;
 }
 
 export default Whatsapp;

@@ -9,7 +9,7 @@ module.exports = {
         allowNull: false
       },
       body: {
-        type: DataTypes.TEXT,
+        type: DataTypes.STRING,
         allowNull: false
       },
       ack: {

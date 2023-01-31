@@ -14,7 +14,7 @@ export const GetWbotMessage = async (
   let limit = 20;
 
   const fetchWbotMessagesGradually = async (): Promise<
-    proto.WebMessageInfo | Message | null | undefined
+    proto.WebMessageInfo | Message
   > => {
     if (getSock.type === "legacy") {
       const wbot: WALegacySocket = getSock;

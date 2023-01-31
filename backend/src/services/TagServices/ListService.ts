@@ -1,10 +1,8 @@
-import { Op, literal, fn, col } from "sequelize";
+import { Op, Sequelize } from "sequelize";
 import Tag from "../../models/Tag";
 import Ticket from "../../models/Ticket";
-import TicketTag from "../../models/TicketTag";
 
 interface Request {
-  companyId: number;
   searchParam?: string;
   pageNumber?: string | number;
 }
@@ -16,7 +14,6 @@ interface Response {
 }
 
 const ListService = async ({
-  companyId,
   searchParam,
   pageNumber = "1"
 }: Request): Promise<Response> => {
@@ -27,33 +24,35 @@ const ListService = async ({
   if (searchParam) {
     whereCondition = {
       [Op.or]: [
-        { name: { [Op.like]: `%${searchParam}%` } },
-        { color: { [Op.like]: `%${searchParam}%` } }
+        { name: {[Op.like]: `%${searchParam}%`} },
+        { color: {[Op.like]: `%${searchParam}%`} }
       ]
-    };
+    }
   }
 
   const { count, rows: tags } = await Tag.findAndCountAll({
-    where: { ...whereCondition, companyId },
+    where: whereCondition,
     limit,
     offset,
     order: [["name", "ASC"]],
-    subQuery: false,
     include: [{
-      model: TicketTag,
-      as: 'ticketTags',
+      model: Ticket,
+      as: 'tickets',
       attributes: [],
       required: false
     }],
-    attributes: [
-      'id',
-      'name',
-      'color',
-      [fn('count', col('ticketTags.tagId')), 'ticketsCount']
+    attributes: {
+      include: [[Sequelize.fn("COUNT", Sequelize.col("tickets.id")), "ticketsCount"]]
+    },
+    group: [
+      "Tag.id",
+      "tickets.TicketTag.tagId",
+      "tickets.TicketTag.ticketId",
+      "tickets.TicketTag.createdAt",
+      "tickets.TicketTag.updatedAt",
     ],
-    group: ['Tag.id']
+    subQuery: false
   });
-
   const hasMore = count > offset + tags.length;
 
   return {

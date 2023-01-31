@@ -5,15 +5,10 @@ import {
 } from "@adiwajshing/baileys";
 import Whatsapp from "../models/Whatsapp";
 
-export const authStateLegacy = async (whatsapp: Whatsapp) => {
-  const updateWhatsappData = await Whatsapp.findOne({
-    where: {
-      id: whatsapp.id
-    }
-  });
+export const authStateLegacy = async (whatsapp: Whatsapp): Promise<any> => {
   let state: LegacyAuthenticationCreds;
-  if (updateWhatsappData?.session) {
-    state = JSON.parse(updateWhatsappData?.session, BufferJSON.reviver);
+  if (whatsapp.session) {
+    state = JSON.parse(whatsapp?.session, BufferJSON.reviver);
     if (typeof state.encKey === "string") {
       state.encKey = Buffer.from(state.encKey, "base64");
     }
@@ -28,7 +23,7 @@ export const authStateLegacy = async (whatsapp: Whatsapp) => {
   return {
     state,
     saveState: async () => {
-      const str = JSON.stringify(state, BufferJSON.replacer, 2);
+      const str = JSON.stringify(state, BufferJSON.replacer, 0);
       await whatsapp.update({
         session: str
       });

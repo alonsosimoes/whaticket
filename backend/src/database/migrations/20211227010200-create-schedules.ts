@@ -42,13 +42,6 @@ module.exports = {
         onDelete: "SET NULL",
         allowNull: true
       },
-      companyId: {
-        type: DataTypes.INTEGER,
-        references: { model: "Companies", key: "id" },
-        onUpdate: "CASCADE",
-        onDelete: "CASCADE",
-        allowNull: true
-      },
       createdAt: {
         type: DataTypes.DATE,
         allowNull: false

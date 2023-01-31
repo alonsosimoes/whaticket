@@ -1,5 +1,6 @@
 import Whatsapp from "../../models/Whatsapp";
 import AppError from "../../errors/AppError";
+import DeleteBaileysService from "../BaileysServices/DeleteBaileysService";
 
 const DeleteWhatsAppService = async (id: string): Promise<void> => {
   const whatsapp = await Whatsapp.findOne({
@@ -11,6 +12,7 @@ const DeleteWhatsAppService = async (id: string): Promise<void> => {
   }
 
   await whatsapp.destroy();
+  await DeleteBaileysService(id);
 };
 
 export default DeleteWhatsAppService;

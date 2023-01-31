@@ -1,11 +1,6 @@
-import React, {
-  useState,
-  useEffect,
-  useReducer,
-  useCallback,
-  useContext,
-} from "react";
+import React, { useState, useEffect, useReducer, useCallback } from "react";
 import { toast } from "react-toastify";
+import openSocket from "socket.io-client";
 
 import { makeStyles } from "@material-ui/core/styles";
 import Paper from "@material-ui/core/Paper";
@@ -34,16 +29,21 @@ import TableRowSkeleton from "../../components/TableRowSkeleton";
 import ScheduleModal from "../../components/ScheduleModal";
 import ConfirmationModal from "../../components/ConfirmationModal";
 import toastError from "../../errors/toastError";
-import moment from "moment";
-import { capitalize } from "lodash";
-import { socketConnection } from "../../services/socket";
-import { AuthContext } from "../../context/Auth/AuthContext";
+import moment from 'moment';
+import { capitalize } from 'lodash';
+import {
+  AddCircleOutline,
+  DeleteForever,
+  DeleteOutline,
+  Edit,
+  Search
+} from "@material-ui/icons";
 
 // A custom hook that builds on useLocation to parse
 // the query string for you.
 const getUrlParam = (param) => {
-  return new URLSearchParams(window.location.search).get(param);
-};
+  return (new URLSearchParams(window.location.search)).get(param)
+}
 
 const reducer = (state, action) => {
   if (action.type === "LOAD_SCHEDULES") {
@@ -101,8 +101,6 @@ const useStyles = makeStyles((theme) => ({
 const Schedules = () => {
   const classes = useStyles();
 
-  const { user } = useContext(AuthContext);
-
   const [loading, setLoading] = useState(false);
   const [pageNumber, setPageNumber] = useState(1);
   const [hasMore, setHasMore] = useState(false);
@@ -112,15 +110,16 @@ const Schedules = () => {
   const [searchParam, setSearchParam] = useState("");
   const [schedules, dispatch] = useReducer(reducer, []);
   const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
-  const [contactId, setContactId] = useState(+getUrlParam("contactId"));
+  const [contactId, setContactId] = useState(+getUrlParam('contactId'));
 
-  const fetchSchedules = useCallback(async () => {
+  const fetchSchedules = useCallback(async() => {
     try {
       const { data } = await api.get("/schedules/", {
         params: { searchParam, pageNumber },
       });
       dispatch({ type: "LOAD_SCHEDULES", payload: data.schedules });
       setHasMore(data.hasMore);
+      setContactId(null);
       setLoading(false);
     } catch (err) {
       toastError(err);
@@ -144,17 +143,11 @@ const Schedules = () => {
       fetchSchedules();
     }, 500);
     return () => clearTimeout(delayDebounceFn);
-  }, [
-    searchParam,
-    pageNumber,
-    contactId,
-    fetchSchedules,
-    handleOpenScheduleModalFromContactId,
-  ]);
+  }, [searchParam, pageNumber, contactId, fetchSchedules, handleOpenScheduleModalFromContactId]);
 
   useEffect(() => {
     handleOpenScheduleModalFromContactId();
-    const socket = socketConnection({ companyId: user.companyId });
+    const socket = openSocket(process.env.REACT_APP_BACKEND_URL);
 
     socket.on("user", (data) => {
       if (data.action === "update" || data.action === "create") {
@@ -169,11 +162,11 @@ const Schedules = () => {
     return () => {
       socket.disconnect();
     };
-  }, [handleOpenScheduleModalFromContactId, user]);
+  }, [handleOpenScheduleModalFromContactId]);
 
   const cleanContact = () => {
-    setContactId("");
-  };
+    setContactId(null);
+  }
 
   const handleOpenScheduleModal = () => {
     setSelectedSchedule(null);
@@ -224,10 +217,10 @@ const Schedules = () => {
 
   const truncate = (str, len) => {
     if (str.length > len) {
-      return str.substring(0, len) + "...";
+      return str.substring(0, len) + '...';
     }
     return str;
-  };
+  }
 
   return (
     <MainContainer>
@@ -250,6 +243,7 @@ const Schedules = () => {
         scheduleId={selectedSchedule && selectedSchedule.id}
         contactId={contactId}
         cleanContact={cleanContact}
+        setContactId={setContactId}
       />
       <MainHeader>
         <Title>{i18n.t("schedules.title")}</Title>
@@ -268,12 +262,12 @@ const Schedules = () => {
             }}
           />
           <Button
-            variant="contained"
-            color="primary"
-            onClick={handleOpenScheduleModal}
-          >
-            {i18n.t("schedules.buttons.add")}
-          </Button>
+              variant="contained"
+              color="primary"
+              onClick={handleOpenScheduleModal}
+            >
+              <AddCircleOutline />
+            </Button>
         </MainHeaderButtonsWrapper>
       </MainHeader>
       <Paper
@@ -284,21 +278,11 @@ const Schedules = () => {
         <Table size="small">
           <TableHead>
             <TableRow>
-              <TableCell align="center">
-                {i18n.t("schedules.table.contact")}
-              </TableCell>
-              <TableCell align="center">
-                {i18n.t("schedules.table.body")}
-              </TableCell>
-              <TableCell align="center">
-                {i18n.t("schedules.table.sendAt")}
-              </TableCell>
-              <TableCell align="center">
-                {i18n.t("schedules.table.status")}
-              </TableCell>
-              <TableCell align="center">
-                {i18n.t("schedules.table.actions")}
-              </TableCell>
+              <TableCell align="center">{i18n.t("schedules.table.contact")}</TableCell>
+              <TableCell align="center">{i18n.t("schedules.table.body")}</TableCell>
+              <TableCell align="center">{i18n.t("schedules.table.sendAt")}</TableCell>
+              <TableCell align="center">{i18n.t("schedules.table.status")}</TableCell>
+              <TableCell align="center">{i18n.t("schedules.table.actions")}</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -306,15 +290,9 @@ const Schedules = () => {
               {schedules.map((schedule) => (
                 <TableRow key={schedule.id}>
                   <TableCell align="center">{schedule.contact.name}</TableCell>
-                  <TableCell align="center" title={schedule.body}>
-                    {truncate(schedule.body, 25)}
-                  </TableCell>
-                  <TableCell align="center">
-                    {moment(schedule.sendAt).format("DD/MM/YYYY HH:mm:ss")}
-                  </TableCell>
-                  <TableCell align="center">
-                    {capitalize(schedule.status)}
-                  </TableCell>
+                  <TableCell align="center" title={schedule.body}>{truncate(schedule.body, 25)}</TableCell>
+                  <TableCell align="center">{moment(schedule.sendAt).format('DD/MM/YYYY HH:mm:ss')}</TableCell>
+                  <TableCell align="center">{capitalize(schedule.status)}</TableCell>
                   <TableCell align="center">
                     <IconButton
                       size="small"

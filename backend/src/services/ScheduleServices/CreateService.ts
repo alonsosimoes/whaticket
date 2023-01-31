@@ -7,7 +7,6 @@ interface Request {
   body: string;
   sendAt: string;
   contactId: number | string;
-  companyId: number | string;
   userId?: number | string;
 }
 
@@ -15,7 +14,6 @@ const CreateService = async ({
   body,
   sendAt,
   contactId,
-  companyId,
   userId
 }: Request): Promise<Schedule> => {
   const schema = Yup.object().shape({
@@ -34,7 +32,6 @@ const CreateService = async ({
       body,
       sendAt,
       contactId,
-      companyId,
       userId,
       status: 'PENDENTE'
     }

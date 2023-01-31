@@ -1,6 +1,5 @@
 import React, { useState, useContext, useEffect } from "react";
 import clsx from "clsx";
-
 import {
   makeStyles,
   Drawer,
@@ -12,28 +11,23 @@ import {
   MenuItem,
   IconButton,
   Menu,
-  useTheme,
-  useMediaQuery,
 } from "@material-ui/core";
-
 import MenuIcon from "@material-ui/icons/Menu";
 import ChevronLeftIcon from "@material-ui/icons/ChevronLeft";
 import AccountCircle from "@material-ui/icons/AccountCircle";
-
 import MainListItems from "./MainListItems";
 import NotificationsPopOver from "../components/NotificationsPopOver";
 import UserModal from "../components/UserModal";
 import { AuthContext } from "../context/Auth/AuthContext";
 import BackdropLoading from "../components/BackdropLoading";
 import { i18n } from "../translate/i18n";
+
+import api from "../services/api";
 import toastError from "../errors/toastError";
-import AnnouncementsPopover from "../components/AnnouncementsPopover";
+import { system } from "../config.json";
+import logo from "../assets/logo-dash.png";
 
-import logo from "../assets/logo.png";
-import { socketConnection } from "../services/socket";
-import ChatPopover from "../pages/Chat/ChatPopover";
-
-const drawerWidth = 300;
+const drawerWidth = 240;
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -43,16 +37,30 @@ const useStyles = makeStyles((theme) => ({
       height: "calc(100vh - 56px)",
     },
   },
-
+  avatar: {
+    width: "100%",
+  },
+  logo: {
+    width: "80%",
+    height: "auto",
+    [theme.breakpoints.down("sm")]: {
+      width: "auto",
+      height: "100%"
+    },
+    logo: theme.logo
+  },
   toolbar: {
     paddingRight: 24, // keep right padding when drawer closed
+    color: "#ffffff",
+    background: theme.palette.toolbar.main
   },
   toolbarIcon: {
     display: "flex",
     alignItems: "center",
-    justifyContent: "space-between",
+    justifyContent: "flex-end",
     padding: "0 8px",
     minHeight: "48px",
+    backgroundColor: theme.palette.toolbarIcon.main
   },
   appBar: {
     zIndex: theme.zIndex.drawer + 1,
@@ -77,7 +85,6 @@ const useStyles = makeStyles((theme) => ({
   },
   title: {
     flexGrow: 1,
-    fontSize: 14,
   },
   drawerPaper: {
     position: "relative",
@@ -105,7 +112,6 @@ const useStyles = makeStyles((theme) => ({
   content: {
     flex: 1,
     overflow: "auto",
-    ...theme.scrollbarStyles,
   },
   container: {
     paddingTop: theme.spacing(4),
@@ -116,13 +122,7 @@ const useStyles = makeStyles((theme) => ({
     display: "flex",
     overflow: "auto",
     flexDirection: "column",
-  },
-  containerWithScroll: {
-    flex: 1,
-    padding: theme.spacing(1),
-    overflowY: "scroll",
-    ...theme.scrollbarStyles,
-  },
+  }
 }));
 
 const LoggedInLayout = ({ children }) => {
@@ -135,12 +135,22 @@ const LoggedInLayout = ({ children }) => {
   const [drawerVariant, setDrawerVariant] = useState("permanent");
   const { user } = useContext(AuthContext);
 
-  const theme = useTheme();
-  const greaterThenSm = useMediaQuery(theme.breakpoints.up("sm"));
-
   useEffect(() => {
     if (document.body.offsetWidth > 600) {
-      setDrawerOpen(true);
+      const fetchDrawerState = async () => {
+        try {
+          const { data } = await api.get("/settings");
+
+          const settingIndex = data.filter(s => s.key === 'sideMenu');
+
+          setDrawerOpen(settingIndex[0].value === "disabled" ? false : true);
+
+        } catch (err) {
+          setDrawerOpen(true);
+          toastError(err);
+        }
+      };
+      fetchDrawerState();
     }
   }, []);
 
@@ -151,34 +161,6 @@ const LoggedInLayout = ({ children }) => {
       setDrawerVariant("permanent");
     }
   }, [drawerOpen]);
-
-  useEffect(() => {
-    const companyId = localStorage.getItem("companyId");
-    const userId = localStorage.getItem("userId");
-
-    const socket = socketConnection({ companyId });
-
-    socket.on(`company-${companyId}-auth`, (data) => {
-      if (data.user.id === +userId) {
-        toastError("Sua conta foi acessada em outro computador.");
-        setTimeout(() => {
-          localStorage.clear();
-          window.location.reload();
-        }, 1000);
-      }
-    });
-
-    socket.emit("userStatus");
-    const interval = setInterval(() => {
-      socket.emit("userStatus");
-    }, 1000 * 60 * 5);
-
-    return () => {
-      socket.disconnect();
-      clearInterval(interval);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const handleMenu = (event) => {
     setAnchorEl(event.currentTarget);
@@ -224,13 +206,13 @@ const LoggedInLayout = ({ children }) => {
         open={drawerOpen}
       >
         <div className={classes.toolbarIcon}>
-          <img src={logo} style={{ margin: "0 auto", height: "50px", width: "100%" }} alt="logo" />
+          <img src={logo} width={"80%"} style={{ marginLeft: 'auto', marginRight: 'auto', display: 'flex' }} />
           <IconButton onClick={() => setDrawerOpen(!drawerOpen)}>
             <ChevronLeftIcon />
           </IconButton>
         </div>
         <Divider />
-        <List className={classes.containerWithScroll}>
+        <List>
           <MainListItems drawerClose={drawerClose} />
         </List>
         <Divider />
@@ -243,12 +225,12 @@ const LoggedInLayout = ({ children }) => {
       <AppBar
         position="absolute"
         className={clsx(classes.appBar, drawerOpen && classes.appBarShift)}
-        color="primary"
+        color={process.env.NODE_ENV === "development" ? "inherit" : "primary"}
       >
         <Toolbar variant="dense" className={classes.toolbar}>
           <IconButton
             edge="start"
-            variant="contained"
+            color="inherit"
             aria-label="open drawer"
             onClick={() => setDrawerOpen(!drawerOpen)}
             className={clsx(
@@ -261,23 +243,17 @@ const LoggedInLayout = ({ children }) => {
           <Typography
             component="h1"
             variant="h6"
-            color="primary"
+            color="inherit"
             noWrap
             className={classes.title}
           >
-            {greaterThenSm ? (
-              <>
-                Olá <b>{user.name}</b>, Seja bem-vindo.
-              </>
-            ) : (
-              user.name
-            )}
+            {system.name}
+            <span className={classes.systemCss}>
+              {""}{system.version}{""}
+            </span>
           </Typography>
+
           {user.id && <NotificationsPopOver />}
-
-          <AnnouncementsPopover />
-
-          <ChatPopover />
 
           <div>
             <IconButton
@@ -285,8 +261,7 @@ const LoggedInLayout = ({ children }) => {
               aria-controls="menu-appbar"
               aria-haspopup="true"
               onClick={handleMenu}
-              variant="contained"
-
+              color="inherit"
             >
               <AccountCircle />
             </IconButton>

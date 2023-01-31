@@ -18,14 +18,12 @@ type IndexQuery = {
 
 export const index = async (req: Request, res: Response): Promise<Response> => {
   const { contactId, userId, pageNumber, searchParam } = req.query as IndexQuery;
-  const { companyId } = req.user;
 
   const { schedules, count, hasMore } = await ListService({
     searchParam,
     contactId,
     userId,
-    pageNumber,
-    companyId
+    pageNumber
   });
 
   return res.json({ schedules, count, hasMore });
@@ -38,13 +36,11 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
     contactId,
     userId
   } = req.body;
-  const { companyId } = req.user;
 
   const schedule = await CreateService({
     body,
     sendAt,
     contactId,
-    companyId,
     userId
   });
 
@@ -59,9 +55,8 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
 
 export const show = async (req: Request, res: Response): Promise<Response> => {
   const { scheduleId } = req.params;
-  const { companyId } = req.user;
 
-  const schedule = await ShowService(scheduleId, companyId);
+  const schedule = await ShowService(scheduleId);
 
   return res.status(200).json(schedule);
 };
@@ -76,9 +71,8 @@ export const update = async (
 
   const { scheduleId } = req.params;
   const scheduleData = req.body;
-  const { companyId } = req.user;
 
-  const schedule = await UpdateService({ scheduleData, id: scheduleId, companyId });
+  const schedule = await UpdateService({ scheduleData, id: scheduleId });
 
   const io = getIO();
   io.emit("schedule", {
@@ -94,9 +88,8 @@ export const remove = async (
   res: Response
 ): Promise<Response> => {
   const { scheduleId } = req.params;
-  const { companyId } = req.user;
 
-  await DeleteService(scheduleId, companyId);
+  await DeleteService(scheduleId);
 
   const io = getIO();
   io.emit("schedule", {

@@ -10,7 +10,61 @@ module.exports = {
           value: "enabled",
           createdAt: new Date(),
           updatedAt: new Date()
-        }
+        },
+        {
+          key: "sideMenu",
+          value: "disabled",
+          createdAt: new Date(),
+          updatedAt: new Date()
+        },
+        {
+          key: "darkMode",
+          value: "disabled",
+          createdAt: new Date(),
+          updatedAt: new Date()
+        },
+        {
+          key: "closeTicketApi",
+          value: "disabled",
+          createdAt: new Date(),
+          updatedAt: new Date()
+        },
+        {
+          key: "ipixc",
+          value: "",
+          createdAt: new Date(),
+          updatedAt: new Date()
+        },
+        {
+          key: "tokenixc",
+          value: "",
+          createdAt: new Date(),
+          updatedAt: new Date()
+        },
+        {
+          key: "tokenasaas",
+          value: "",
+          createdAt: new Date(),
+          updatedAt: new Date()
+        },
+        {
+          key: "ipmkauth",
+          value: "",
+          createdAt: new Date(),
+          updatedAt: new Date()
+        },
+        {
+          key: "clientidmkauth",
+          value: "",
+          createdAt: new Date(),
+          updatedAt: new Date()
+        },
+        {
+          key: "clientesecretmkauth",
+          value: "",
+          createdAt: new Date(),
+          updatedAt: new Date()
+        }          
       ],
       {}
     );
