@@ -152,14 +152,10 @@ const CustomLink = ({ children, ...props }) => (
 const MarkdownWrapper = ({ children }) => {
 	const boldRegex = /\*(.*?)\*/g;
 	const tildaRegex = /~(.*?)~/g;
-	
-	if(children && children.includes('BEGIN:VCARD'))
-		//children = "Diga olá ao seu novo contato clicando em *conversar*!";
+
+	if (children && children.includes('BEGIN:VCARD'))
 		children = null;
-	
-	if(children && children.includes('data:image/'))
-		children = null;
-	
+
 	if (children && boldRegex.test(children)) {
 		children = children.replace(boldRegex, "**$1**");
 	}
@@ -186,7 +182,7 @@ const MarkdownWrapper = ({ children }) => {
 	}, []);
 
 	if (!children) return null;
-	
+
 	return <Markdown options={options}>{children}</Markdown>;
 };
 

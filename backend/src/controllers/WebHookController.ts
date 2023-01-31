@@ -1,5 +1,7 @@
 import { Request, Response } from "express";
+import Whatsapp from "../models/Whatsapp";
 import { handleMessage } from "../services/FacebookServices/facebookMessageListener";
+// import { handleMessage } from "../services/FacebookServices/facebookMessageListener";
 
 export const index = async (req: Request, res: Response): Promise<Response> => {
   const VERIFY_TOKEN = process.env.VERIFY_TOKEN || "whaticket";
@@ -23,7 +25,11 @@ export const webHook = async (
   req: Request,
   res: Response
 ): Promise<Response> => {
+ try {
   const { body } = req;
+
+  console.log(body)
+
   if (body.object === "page" || body.object === "instagram") {
     let channel: string;
 
@@ -33,11 +39,21 @@ export const webHook = async (
       channel = "instagram";
     }
 
-    console.log(body);
-    body.entry?.forEach((entry: any) => {
-      entry.messaging?.forEach((data: any) => {
-        handleMessage(data, channel);
+    body.entry?.forEach(async (entry: any) => {
+      const getTokenPage = await Whatsapp.findOne({
+        where: {
+          facebookPageUserId: entry.id,
+          channel
+        }
       });
+
+      if (getTokenPage) {
+        entry.messaging?.forEach((data: any) => {
+ 
+          console.log(data)
+          handleMessage(getTokenPage, data, channel, getTokenPage.companyId);
+        });
+      }
     });
 
     return res.status(200).json({
@@ -48,4 +64,9 @@ export const webHook = async (
   return res.status(404).json({
     message: body
   });
+ } catch (error) {
+  return res.status(500).json({
+    message: error
+  });
+ }
 };

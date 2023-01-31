@@ -3,6 +3,7 @@ import Message from "../../models/Message";
 import Ticket from "../../models/Ticket";
 import { sendText } from "./graphAPI";
 import formatBody from "../../helpers/Mustache";
+import { verifyMessage } from "./facebookMessageListener";
 
 interface Request {
   body: string;
@@ -12,12 +13,18 @@ interface Request {
 
 const SendWhatsAppMessage = async ({ body, ticket }: Request): Promise<any> => {
   const { number } = ticket.contact;
-
   try {
+
+    const send = await sendText(
+      number,
+      formatBody(body, ticket.contact),
+      ticket.whatsapp.facebookUserToken
+    );
+
     await ticket.update({ lastMessage: body });
-    sendText(number, formatBody(body, ticket.contact));
+
   } catch (err) {
-    console.log(err);
+    console.log(err)
     throw new AppError("ERR_SENDING_FACEBOOK_MSG");
   }
 };

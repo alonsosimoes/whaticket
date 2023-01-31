@@ -2,6 +2,7 @@ import { Server as SocketIO } from "socket.io";
 import { Server } from "http";
 import AppError from "../errors/AppError";
 import { logger } from "../utils/logger";
+import { userMonitor } from "../queues/userMonitor";
 
 let io: SocketIO;
 
@@ -12,8 +13,10 @@ export const initIO = (httpServer: Server): SocketIO => {
     }
   });
 
-  io.on("connection", socket => {
+  io.on("connection", async socket => {
     logger.info("Client Connected");
+    const { userId } = socket.handshake.query;
+
     socket.on("joinChatBox", (ticketId: string) => {
       logger.info("A client joined a ticket channel");
       socket.join(ticketId);
@@ -29,9 +32,16 @@ export const initIO = (httpServer: Server): SocketIO => {
       socket.join(status);
     });
 
-    socket.on("disconnect", () => {
-      logger.info("Client disconnected");
-    });
+    userMonitor.add(
+      "UserConnection",
+      {
+        id: userId
+      },
+      {
+        removeOnComplete: { age: 60 * 60, count: 10 },
+        removeOnFail: { age: 60 * 60, count: 10 }
+      }
+    );
   });
   return io;
 };

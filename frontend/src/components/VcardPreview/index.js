@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useContext } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useHistory } from "react-router-dom";
 import toastError from "../../errors/toastError";
 import api from "../../services/api";
@@ -6,14 +6,12 @@ import api from "../../services/api";
 import Avatar from "@material-ui/core/Avatar";
 import Typography from "@material-ui/core/Typography";
 import Grid from "@material-ui/core/Grid";
-
-import { AuthContext } from "../../context/Auth/AuthContext";
-
 import { Button, Divider, } from "@material-ui/core";
+import NewTicketModal from "../NewTicketModal";
 
 const VcardPreview = ({ contact, numbers }) => {
     const history = useHistory();
-    const { user } = useContext(AuthContext);
+    const [newTicketModalOpen, setNewTicketModalOpen] = useState(false);
 
     const [selectedContact, setContact] = useState({
         name: "",
@@ -23,15 +21,44 @@ const VcardPreview = ({ contact, numbers }) => {
 
     useEffect(() => {
         const delayDebounceFn = setTimeout(() => {
-            const fetchContacts = async() => {
+            const number = numbers?.replace(/\D/g, "");
+            let chatId;
+            let numberDDI;
+            let numberDDD;
+            let numberUser;
+
+            if (number?.toString().substr(0, 2) === "55" && number !== undefined) {
+                numberDDI = number.toString().substr(0, 2);
+                numberDDD = number.toString().substr(2, 2);
+                numberUser = number.toString().substr(-8, 8);
+            }
+
+            if (numberDDD <= '30' && numberDDI === '55') {
+                chatId = `${numberDDI + numberDDD + 9 + numberUser}@s.whatsapp.net`;
+            } else if (numberDDD > '30' && numberDDI === '55') {
+                chatId = `${numberDDI + numberDDD + numberUser}@s.whatsapp.net`;
+            } else {
+                chatId = `${numbers}@s.whatsapp.net`;
+            }
+
+
+            const fetchContacts = async () => {
                 try {
                     let contactObj = {
                         name: contact,
-                        number: numbers.replace(/\D/g, ""),
-                        email: ""
+                        number: chatId !== undefined && chatId.replace(/\D/g, ""),
                     }
-                    const { data } = await api.post("/contact", contactObj);
-                    setContact(data)
+
+                    const { data } = await api.get("/contact/", {
+                        params: contactObj
+                    });
+
+                    if (!data.id) {
+                        const { data } = await api.post("/contact", contactObj);
+                        setContact(data)
+                    } else {
+                        setContact(data)
+                    }
 
                 } catch (err) {
                     console.log(err)
@@ -43,46 +70,61 @@ const VcardPreview = ({ contact, numbers }) => {
         return () => clearTimeout(delayDebounceFn);
     }, [contact, numbers]);
 
-    const handleNewChat = async() => {
-        try {
-            const { data: ticket } = await api.post("/tickets", {
-                contactId: selectedContact.id,
-                userId: user.id,
-                status: "open",
-            });
-            history.push(`/tickets/${ticket.id}`);
-        } catch (err) {
-            toastError(err);
+    const handleCloseOrOpenTicket = (ticket) => {
+        setNewTicketModalOpen(false);
+        if (ticket !== undefined && ticket.uuid !== undefined) {
+            history.push(`/tickets/${ticket.uuid}`);
         }
-    }
+    };
 
     return (
-		<>
-			<div style={{
-				minWidth: "250px",
-			}}>
-				<Grid container spacing={1}>
-					<Grid item xs={2}>
-						<Avatar src={selectedContact.profilePicUrl} />
-					</Grid>
-					<Grid item xs={9}>
-						<Typography style={{ marginTop: "12px", marginLeft: "10px" }} variant="subtitle1" color="primary" gutterBottom>
-							{selectedContact.name}
-						</Typography>
-					</Grid>
-					<Grid item xs={12}>
-						<Divider />
-						<Button
-							fullWidth
-							color="primary"
-							onClick={handleNewChat}
-							disabled={!selectedContact.number}
-						>Conversar</Button>
-					</Grid>
-				</Grid>
-			</div>
-		</>
-	);
+        <>
+            <NewTicketModal
+                modalOpen={newTicketModalOpen}
+                onClose={(ticket) => {
+                    console.log("ticket", ticket);
+                    handleCloseOrOpenTicket(ticket);
+                }}
+                initialContact={selectedContact}
+            />
+            <div style={{
+                minWidth: "250px",
+            }}>
+                <Grid container spacing={0}>
+                    <Grid
+                        style={{
+                            justifyContent: "center",
+                            display: "flex"
+                        }}
+                        item xs={12}>
+                        <Avatar src={selectedContact?.profilePicUrl} />
+                    </Grid>
+                    <Grid
+                        style={{
+                            justifyContent: "center",
+                            display: "flex"
+                        }}
+                        item xs={12}>
+                        <Typography
+                            variant="subtitle1"
+                            // color="secondary"
+                            gutterBottom>
+                            {selectedContact.name}
+                        </Typography>
+                    </Grid>
+                    <Grid item xs={12}>
+                        <Divider />
+                        <Button
+                            fullWidth
+                            color="primary"
+                            onClick={() => setNewTicketModalOpen(true)}
+                            disabled={!selectedContact.number}
+                        >{!selectedContact.number ? "Número Inválido" : "Conversar"}</Button>
+                    </Grid>
+                </Grid>
+            </div>
+        </>
+    );
 
 };
 

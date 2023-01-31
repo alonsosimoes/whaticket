@@ -18,13 +18,12 @@ contactRoutes.get("/contacts/list", isAuth, ContactController.list);
 
 contactRoutes.get("/contacts/:contactId", isAuth, ContactController.show);
 
-contactRoutes.post("/contacts", isAuth, ContactController.store);
+contactRoutes.get("/contact", isAuth, ContactController.getContactVcard);
 
-contactRoutes.post("/contact", isAuth, ContactController.getContact);
+contactRoutes.post("/contacts", isAuth, ContactController.store);
 
 contactRoutes.put("/contacts/:contactId", isAuth, ContactController.update);
 
 contactRoutes.delete("/contacts/:contactId", isAuth, ContactController.remove);
-
 
 export default contactRoutes;

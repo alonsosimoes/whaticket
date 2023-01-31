@@ -1,22 +1,23 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { useParams, useHistory } from "react-router-dom";
 
 import { toast } from "react-toastify";
-import openSocket from "../../services/socket-io";
 import clsx from "clsx";
 
 import { Paper, makeStyles } from "@material-ui/core";
-import { TagsContainer } from "../TagsContainer";
 
 import ContactDrawer from "../ContactDrawer";
-import MessageInput from "../MessageInput/";
+import MessageInput from "../MessageInputCustom/";
 import TicketHeader from "../TicketHeader";
 import TicketInfo from "../TicketInfo";
-import TicketActionButtons from "../TicketActionButtons";
+import TicketActionButtons from "../TicketActionButtonsCustom";
 import MessagesList from "../MessagesList";
 import api from "../../services/api";
 import { ReplyMessageProvider } from "../../context/ReplyingMessage/ReplyingMessageContext";
 import toastError from "../../errors/toastError";
+import { AuthContext } from "../../context/Auth/AuthContext";
+import { TagsContainer } from "../TagsContainer";
+import { socketConnection } from "../../services/socket";
 
 const drawerWidth = 320;
 
@@ -26,25 +27,6 @@ const useStyles = makeStyles((theme) => ({
     height: "100%",
     position: "relative",
     overflow: "hidden",
-  },
-
-  ticketInfo: {
-    maxWidth: "50%",
-    flexBasis: "50%",
-    [theme.breakpoints.down("sm")]: {
-      maxWidth: "80%",
-      flexBasis: "80%",
-    },
-  },
-  ticketActionButtons: {
-    maxWidth: "50%",
-    flexBasis: "50%",
-    display: "flex",
-    [theme.breakpoints.down("sm")]: {
-      maxWidth: "100%",
-      flexBasis: "100%",
-      marginBottom: "5px",
-    },
   },
 
   mainWrapper: {
@@ -79,6 +61,8 @@ const Ticket = () => {
   const history = useHistory();
   const classes = useStyles();
 
+  const { user } = useContext(AuthContext);
+
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [contact, setContact] = useState({});
@@ -89,7 +73,7 @@ const Ticket = () => {
     const delayDebounceFn = setTimeout(() => {
       const fetchTicket = async () => {
         try {
-          const { data } = await api.get("/tickets/" + ticketId);
+          const { data } = await api.get("/tickets/u/" + ticketId);
 
           setContact(data.contact);
           setTicket(data);
@@ -102,14 +86,15 @@ const Ticket = () => {
       fetchTicket();
     }, 500);
     return () => clearTimeout(delayDebounceFn);
-  }, [ticketId, history]);
+  }, [ticketId, user, history]);
 
   useEffect(() => {
-    const socket = openSocket();
+    const companyId = localStorage.getItem("companyId");
+    const socket = socketConnection({ companyId });
 
-    socket.on("connect", () => socket.emit("joinChatBox", ticketId));
+    socket.on("connect", () => socket.emit("joinChatBox", `${ticket.id}`));
 
-    socket.on("ticket", (data) => {
+    socket.on(`company-${companyId}-ticket`, (data) => {
       if (data.action === "update") {
         setTicket(data.ticket);
       }
@@ -120,7 +105,7 @@ const Ticket = () => {
       }
     });
 
-    socket.on("contact", (data) => {
+    socket.on(`company-${companyId}-contact`, (data) => {
       if (data.action === "update") {
         setContact((prevState) => {
           if (prevState.id === data.contact?.id) {
@@ -134,7 +119,7 @@ const Ticket = () => {
     return () => {
       socket.disconnect();
     };
-  }, [ticketId, history]);
+  }, [ticketId, ticket, history]);
 
   const handleDrawerOpen = () => {
     setDrawerOpen(true);
@@ -142,6 +127,36 @@ const Ticket = () => {
 
   const handleDrawerClose = () => {
     setDrawerOpen(false);
+  };
+
+  const renderTicketInfo = () => {
+    if (ticket.user !== undefined) {
+      return (
+        <TicketInfo
+          contact={contact}
+          ticket={ticket}
+          onClick={handleDrawerOpen}
+        />
+      );
+    }
+  };
+
+  const renderMessagesList = () => {
+    return (
+      <>
+        <MessagesList
+          ticket={ticket}
+          ticketId={ticket.id}
+          isGroup={ticket.isGroup}
+        ></MessagesList>
+
+
+        {(ticket.userId === user.id || user.profile === "admin") && (
+          <MessageInput ticketId={ticket.id} ticketStatus={ticket.status} />
+        )
+        }
+      </>
+    );
   };
 
   return (
@@ -154,33 +169,24 @@ const Ticket = () => {
         })}
       >
         <TicketHeader loading={loading}>
-          <div className={classes.ticketInfo}>
-            <TicketInfo
-              contact={contact}
-              ticket={ticket}
-              onClick={handleDrawerOpen}
-            />
-          </div>
-          <div className={classes.ticketActionButtons}>
-            <TicketActionButtons ticket={ticket} />
-          </div>
+          {renderTicketInfo()}
+          {(ticket.userId === user.id ||
+            user.profile === "admin" ||
+            ticket.status === "closed") && (
+              <TicketActionButtons ticket={ticket} />
+            )}
         </TicketHeader>
         <Paper>
           <TagsContainer ticket={ticket} />
         </Paper>
-        <ReplyMessageProvider>
-          <MessagesList
-            ticketId={ticketId}
-            isGroup={ticket.isGroup}
-          ></MessagesList>
-          <MessageInput ticketStatus={ticket.status} />
-        </ReplyMessageProvider>
+        <ReplyMessageProvider>{renderMessagesList()}</ReplyMessageProvider>
       </Paper>
       <ContactDrawer
         open={drawerOpen}
         handleDrawerClose={handleDrawerClose}
         contact={contact}
         loading={loading}
+        ticket={ticket}
       />
     </div>
   );

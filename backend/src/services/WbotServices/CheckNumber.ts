@@ -1,35 +1,34 @@
+import AppError from "../../errors/AppError";
 import GetDefaultWhatsApp from "../../helpers/GetDefaultWhatsApp";
 import { getWbot } from "../../libs/wbot";
 
-interface IOnWhatsapp {
-  jid: string;
-  exists: boolean;
-}
+const CheckContactNumber = async (
+  number: string, companyId: number
+): Promise<string> => {
+  const wahtsappList = await GetDefaultWhatsApp(companyId);
 
-
-const CheckContactNumber = async (number: string): Promise<string> => {
-  const defaultWhatsapp = await GetDefaultWhatsApp();
-
-  const wbot = getWbot(defaultWhatsapp.id);
-  let isGroup = number.endsWith("@g.us")
-  let numberArray
+  const wbot = getWbot(wahtsappList.id);
+  const isGroup = number.endsWith("@g.us");
+  let numberArray;
   if (isGroup) {
-    const grupoMeta = await wbot.groupMetadata(number, false);
-    numberArray = [{
-      jid: grupoMeta.id,
-      exists: true
-    }]
+    const grupoMeta = await wbot.groupMetadata(number);
+    numberArray = [
+      {
+        jid: grupoMeta.id,
+        exists: true
+      }
+    ];
   } else {
     numberArray = await wbot.onWhatsApp(`${number}@s.whatsapp.net`);
   }
 
-  const isNumberExit = numberArray
+  const isNumberExit = numberArray;
 
   if (!isNumberExit[0]?.exists) {
-    throw new Error("ERR_CHECK_NUMBER");
+    throw new AppError("ERR_WAPP_INVALID_CONTACT");
   }
 
-  return isGroup ? number.split('@')[0] : isNumberExit[0].jid.replace(/[^\d]/g, "");
+  return isGroup ? number.split("@")[0] : isNumberExit[0].jid.split("@")[0];
 };
 
 export default CheckContactNumber;

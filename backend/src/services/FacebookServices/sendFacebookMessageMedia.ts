@@ -2,15 +2,18 @@ import fs from "fs";
 import AppError from "../../errors/AppError";
 import Ticket from "../../models/Ticket";
 // import formatBody from "../../helpers/Mustache";
-import { sendAttachment } from "./graphAPI";
+import { sendAttachment, sendAttachmentFromUrl } from "./graphAPI";
+// import cloudinary  from "cloudinary"
+import { verifyMessage } from "./facebookMessageListener";
 
 interface Request {
-  media: Express.Multer.File;
   ticket: Ticket;
+  media?: Express.Multer.File;
   body?: string;
+  url?: string;
 }
 
-const typeAttachment = (media: Express.Multer.File) => {
+export const typeAttachment = (media: Express.Multer.File) => {
   if (media.mimetype.includes("image")) {
     return "image";
   }
@@ -24,31 +27,31 @@ const typeAttachment = (media: Express.Multer.File) => {
   return "file";
 };
 
+
+
 const sendFacebookMessageMedia = async ({
   media,
+  url,
   ticket,
   body
 }: Request): Promise<any> => {
   try {
-    // const hasBody = body
-    //   ? formatBody(body as string, ticket.contact)
-    //   : undefined;
 
     const type = typeAttachment(media);
-    console.log(`Sending ${type} to ${ticket.contact.id}`);
-    const sendMessage = await sendAttachment(
+    const sendMessage = await sendAttachmentFromUrl(
       ticket.contact.number,
-      fs.createReadStream(media.path),
-      type
+      `https://api.optinchat.com.br/public/${ media.filename}`,
+      type,
+      ticket.whatsapp.facebookUserToken
     );
 
     await ticket.update({ lastMessage: body || media.filename });
 
     fs.unlinkSync(media.path);
+    await verifyMessage(sendMessage, body || media.filename, ticket, ticket.contact);
 
     return sendMessage;
   } catch (err) {
-    console.log(err);
     throw new AppError("ERR_SENDING_FACEBOOK_MSG");
   }
 };

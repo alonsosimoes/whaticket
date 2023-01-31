@@ -1,4 +1,4 @@
-import { proto, WALegacySocket, WASocket } from "@adiwajshing/baileys";
+import { proto, WASocket } from "@adiwajshing/baileys";
 import { getIO } from "../libs/socket";
 import Message from "../models/Message";
 import Ticket from "../models/Ticket";
@@ -6,26 +6,37 @@ import { logger } from "../utils/logger";
 import GetTicketWbot from "./GetTicketWbot";
 
 const SetTicketMessagesAsRead = async (ticket: Ticket): Promise<void> => {
+
+
   await ticket.update({ unreadMessages: 0 });
 
+  if(ticket.channel === 'whatsapp') {
+
   try {
-    if (ticket.channel === "whatsapp") {
-      const wbot = await GetTicketWbot(ticket);
-      if (wbot.type === "legacy") {
-        const chatMessages = await (wbot as WALegacySocket).fetchMessagesFromWA(
-          `${ticket.contact.number}@${
-            ticket.isGroup ? "g.us" : "s.whatsapp.net"
-          }`,
-          100
-        );
-        chatMessages.forEach(async message => {
-          await (wbot as WALegacySocket).chatRead(message.key, 1);
-        });
-      }
+    const wbot = await GetTicketWbot(ticket);
+    // no baileys temos que marcar cada mensagem como lida
+    // não o chat inteiro como é feito no legacy
+    const getJsonMessage = await Message.findAll({
+      where: {
+        ticketId: ticket.id,
+        fromMe: false,
+        read: false
+      },
+      order: [["createdAt", "DESC"]]
+    });
 
-      logger.info(`Ticket ${ticket.id} messages read`);
+    if (getJsonMessage.length > 0) {
+
+
+
+      getJsonMessage.forEach(async message => {
+        const msg: proto.IWebMessageInfo = JSON.parse(message.dataJson);
+        if (msg.key && msg.key.fromMe === false) {
+
+          await wbot.readMessages([msg.key])
+        }
+      });
     }
-
     await Message.update(
       { read: true },
       {
@@ -41,6 +52,8 @@ const SetTicketMessagesAsRead = async (ticket: Ticket): Promise<void> => {
       `Could not mark messages as read. Maybe whatsapp session disconnected? Err: ${err}`
     );
   }
+
+  } 
 
   const io = getIO();
   io.to(ticket.status).to("notification").emit("ticket", {

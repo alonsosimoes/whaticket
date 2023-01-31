@@ -7,30 +7,33 @@ import DeleteBaileysService from "../services/BaileysServices/DeleteBaileysServi
 
 const store = async (req: Request, res: Response): Promise<Response> => {
   const { whatsappId } = req.params;
-  const whatsapp = await ShowWhatsAppService(whatsappId);
+  const { companyId } = req.user;
 
-  StartWhatsAppSession(whatsapp);
+  const whatsapp = await ShowWhatsAppService(whatsappId, companyId);
+  await StartWhatsAppSession(whatsapp, companyId);
 
   return res.status(200).json({ message: "Starting session." });
 };
 
 const update = async (req: Request, res: Response): Promise<Response> => {
   const { whatsappId } = req.params;
+  const { companyId } = req.user;
 
   const { whatsapp } = await UpdateWhatsAppService({
     whatsappId,
+    companyId,
     whatsappData: { session: "" }
   });
-  await DeleteBaileysService(whatsappId);
 
-  StartWhatsAppSession(whatsapp);
+  await StartWhatsAppSession(whatsapp, companyId);
 
   return res.status(200).json({ message: "Starting session." });
 };
 
 const remove = async (req: Request, res: Response): Promise<Response> => {
   const { whatsappId } = req.params;
-  const whatsapp = await ShowWhatsAppService(whatsappId);
+  const { companyId } = req.user;
+  const whatsapp = await ShowWhatsAppService(whatsappId, companyId);
   await DeleteBaileysService(whatsappId);
 
   const wbot = getWbot(whatsapp.id);
