@@ -912,7 +912,7 @@ const wbotMessageListener = async (wbot: Session): Promise<void> => {
           !message.key.fromMe &&
           messageUpsert.type === "notify"
         ) {
-          (wbot as WASocket)!.readMessages([message.key]);
+          if (message.key.remoteJid != "status@broadcast") (wbot as WASocket)!.readMessages([message.key]);
         }
         // console.log(JSON.stringify(message));
         handleMessage(message, wbot);
