@@ -307,7 +307,7 @@ const verifyContact = async (
 
   const contactData = {
     name: msgContact?.name || msgContact.id.replace(/\D/g, ""),
-    number: msgContact.id.replace(/\D/g, ""),
+    number: msgContact.id.replace(/./g, (a) => { if(a === '-' || a.match(/\d/)) {return a;} return '' }),
     profilePicUrl,
     isGroup: msgContact.id.includes("g.us")
   };
