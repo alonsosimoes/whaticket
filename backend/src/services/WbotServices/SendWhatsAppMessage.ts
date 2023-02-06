@@ -1,4 +1,4 @@
-import { WALegacySocket, WAMessage } from "@adiwajshing/baileys";
+import { WAMessage } from "@adiwajshing/baileys";
 import AppError from "../../errors/AppError";
 import GetTicketWbot from "../../helpers/GetTicketWbot";
 import Message from "../../models/Message";
@@ -23,17 +23,7 @@ const SendWhatsAppMessage = async ({
     ticket.isGroup ? "g.us" : "s.whatsapp.net"
   }`;
   if (quotedMsg) {
-    if (wbot.type === "legacy") {
-      const chatMessages = await (wbot as WALegacySocket).loadMessageFromWA(
-        number,
-        quotedMsg.id
-      );
-
-      options = {
-        quoted: chatMessages
-      };
-    }
-
+    
     if (wbot.type === "md") {
       const chatMessages = await Message.findOne({
         where: {

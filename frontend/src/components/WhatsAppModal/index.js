@@ -116,9 +116,8 @@ const WhatsAppModal = ({ open, onClose, whatsAppId }) => {
     greetingMessage: "",
     farewellMessage: "",
     isDefault: false,
-    isMultidevice: false,
-    		transferTicketMessage: "",
-
+    isMultidevice: true,
+    transferTicketMessage: ""
   };
   const [whatsApp, setWhatsApp] = useState(initialState);
   const [selectedQueueIds, setSelectedQueueIds] = useState([]);
@@ -279,17 +278,6 @@ const WhatsAppModal = ({ open, onClose, whatsAppId }) => {
                     label={i18n.t("whatsappModal.form.default")}
                   />
 
-                  <FormControlLabel
-                    control={
-                      <Field
-                        as={Switch}
-                        color="primary"
-                        name="isMultidevice"
-                        checked={values.isMultidevice}
-                      />
-                    }
-                    label={i18n.t("whatsappModal.form.isMultidevice")}
-                  />
                 </div>
                 <div>
                   <Field
