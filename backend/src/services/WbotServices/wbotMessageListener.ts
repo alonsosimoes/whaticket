@@ -58,9 +58,9 @@ const getDavinciResponse = async (clientText: string) => {
     response.data.choices.forEach(({ text }) => {
       botResponse += text;
     });
-    return `A integração do chat com a API do ChatGpt é experimental e o SENAI/MS não se responsabiliza pelo conteúdo gerado (saiba mais em https://openai.com/).\n\nChat Gpt 🤖:\n\n ${botResponse.trim()}`;
+    return `🤖 SENAI ChatGPT :\n\n${botResponse.trim()}\n\n🚀 Sempre acompanhando as novas tecnologias o SENAI proporciona experiências como esta. Compartilhe com seus amigos!\n\n⚠️ O SENAI MS não se responsabiliza pelos conteúdos gerados.\n\n👉 O conteúdo acima foi gerado através da Inteligência Artificial ChatGPT, saiba mais em https://openai.com/.`;
   } catch (e) {
-    return `❌ OpenAI Response Error: ${e.response.data.error.message}`;
+    return `❌ Erro! O ChatGPT possui algumas limitações quanto ao uso e disponibilidade do serviço.\n\n💬 Refaça sua busca de um modo diferente.\n\n⏳ Ou aguarde o retorno do serviço.\n\nDescrição do erro:\n${e.response.data.error.message}`;
   }
 };
 
@@ -74,7 +74,7 @@ const getDalleResponse = async (clientText: string): Promise<string> => {
       const response = await openai.createImage(options);
       return response.data.data[0].url;
   } catch (e) {
-      return `❌ OpenAI Response Error: ${e.response.data.error.message}`;
+      return `❌ Erro! O ChatGPT possui algumas limitações quanto ao uso e disponibilidade do serviço.\n\n💬 Refaça sua busca de um modo diferente.\n\n⏳ Ou aguarde o retorno do serviço.\n\nDescrição do erro:\n${e.response.data.error.message}`;
   }
 };
 
@@ -881,11 +881,11 @@ const handleMessage = async (
   
   const msgChatGPT = msg.message.conversation;
   
-  if ( msgChatGPT.includes("/botsenai") ) {
+  if ( msgChatGPT.toLowerCase().includes("/botsenai") && !msgChatGPT.toLowerCase().includes(" senai") && !msgChatGPT.toLowerCase().includes(" sesi") && !msgChatGPT.toLowerCase().includes(" iel") && !msgChatGPT.toLowerCase().includes(" fiems")) {
     const index = msgChatGPT.indexOf(' ');
     const question = msgChatGPT.substring(index + 1);
     const response = await getDavinciResponse(question);
-    console.log('RESULT: ', response);
+    //console.log('RESULT: ', response);
     const body = formatBody(response, contact);
       const sentMessage = await wbot.sendMessage(
         `${contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`,
@@ -901,19 +901,24 @@ const handleMessage = async (
     const imgDescription = msgChatGPT.substring(index + 1);
     const imgUrl = await getDalleResponse(imgDescription);
     const ZDGImagem = {
-      caption: imgDescription,
+      caption: "Imagem gerada por Inteligência Artificial",
       image: {
         url: imgUrl,
       },
     };
-    console.log('RESULT: ', ZDGImagem);
+    //console.log('RESULT: ', ZDGImagem);
     const sentMessage = await wbot.sendMessage(
         `${contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`,
         {
           ...ZDGImagem
         }
       );
- 
+    const sentMessage2 = await wbot.sendMessage(
+        `${contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`,
+        {
+          text: `🚀 Sempre acompanhando as novas tecnologias o SENAI proporciona experiências como esta. Compartilhe com seus amigos!\n\n⚠️ O SENAI MS não se responsabiliza pelos conteúdos gerados.\n\n👉 O conteúdo acima foi gerado através da Inteligência Artificial Dall-E 2, saiba mais em https://openai.com/.`
+        }
+      );
   }
 
   } catch (err) {
