@@ -886,7 +886,7 @@ const handleMessage = async (
       await verifyMessage(sentMessage, ticket, contact);
     }
   
-  if (enableGPT?.value === "disabled") return;
+  if (enableGPT?.value === "disabled" || organization === "" || apiKey === "") return;
   
   const msgChatGPT = msg.message.conversation;
   
