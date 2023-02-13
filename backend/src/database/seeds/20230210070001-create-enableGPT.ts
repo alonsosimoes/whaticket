@@ -7,7 +7,7 @@ module.exports = {
       [
         {
           key: "EnableGPT",
-          value: "disable",
+          value: "disabled",
           createdAt: new Date(),
           updatedAt: new Date()
         }
