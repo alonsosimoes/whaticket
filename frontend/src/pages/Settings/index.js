@@ -232,6 +232,31 @@ const Settings = () => {
 					</Select>
 				</Paper>
 
+				<Paper className={classes.paper}>
+					<Typography variant="body1">
+						{i18n.t("settings.settings.EnableGPT.name")}
+					</Typography>
+					<Select
+						margin="dense"
+						variant="outlined"
+						native
+						id="EnableGPT-setting"
+						name="EnableGPT"
+						value={
+							settings && settings.length > 0 && getSettingValue("EnableGPT")
+						}
+						className={classes.settingOption}
+						onChange={handleChangeSetting}
+					>
+						<option value="enabled">
+							{i18n.t("settings.settings.EnableGPT.options.enabled")}
+						</option>
+						<option value="disabled">
+							{i18n.t("settings.settings.EnableGPT.options.disabled")}
+						</option>
+					</Select>
+				</Paper>
+
         <Paper className={classes.paper}>
           <Typography variant="body1">
             Tipo do Chatbot

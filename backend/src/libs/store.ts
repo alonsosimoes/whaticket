@@ -1,5 +1,5 @@
 import {
-  AnyWASocket,
+  WASocket,
   BaileysEventEmitter,
   Chat,
   ConnectionState,
@@ -8,8 +8,7 @@ import {
   PresenceData,
   proto,
   WAMessageCursor,
-  WAMessageKey,
-  WALegacySocket
+  WAMessageKey
 } from "@adiwajshing/baileys";
 import KeyedDB from "@adiwajshing/keyed-db";
 
@@ -49,32 +48,28 @@ export interface Store {
     jid: string,
     count: number,
     cursor: WAMessageCursor,
-    sock: WALegacySocket | undefined
+    sock: WASocket | undefined
   ) => Promise<proto.IWebMessageInfo[]>;
   loadMessage: (
     jid: string,
     id: string,
-    sock: WALegacySocket | undefined
+    sock: WASocket | undefined
   ) => Promise<proto.IWebMessageInfo>;
   mostRecentMessage: (
     jid: string,
-    sock: WALegacySocket | undefined
+    sock: WASocket | undefined
   ) => Promise<proto.IWebMessageInfo>;
   fetchImageUrl: (
     jid: string,
-    sock: AnyWASocket | undefined
+    sock: WASocket | undefined
   ) => Promise<string>;
   fetchGroupMetadata: (
     jid: string,
-    sock: AnyWASocket | undefined
-  ) => Promise<GroupMetadata>;
-  fetchBroadcastListInfo: (
-    jid: string,
-    sock: WALegacySocket | undefined
+    sock: WASocket | undefined
   ) => Promise<GroupMetadata>;
   fetchMessageReceipts: (
     { remoteJid, id }: WAMessageKey,
-    sock: WALegacySocket | undefined
+    sock: WASocket | undefined
   ) => Promise<proto.IUserReceipt[]>;
   toJSON: () => {
     chats: KeyedDB<Chat, string>;

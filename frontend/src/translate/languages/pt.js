@@ -514,6 +514,13 @@ const messages = {
                 disabled: "Desativado",
             },
           },
+          EnableGPT: {
+            name: "Habilitar integração com chat GPT",
+            options: {
+                enabled: "Ativado",
+                disabled: "Desativado",
+            },
+          },
         },
       },
       messagesList: {

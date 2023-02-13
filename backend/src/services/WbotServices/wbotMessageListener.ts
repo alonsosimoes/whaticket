@@ -4,13 +4,11 @@ import { writeFile } from "fs";
 import * as Sentry from "@sentry/node";
 
 import {
-  AnyWASocket,
   downloadContentFromMessage,
   jidNormalizedUser,
   MediaType,
   MessageUpsertType,
   proto,
-  WALegacySocket,
   WAMessage,
   WAMessageUpdate,
   WASocket,
@@ -36,8 +34,54 @@ import { debounce } from "../../helpers/Debounce";
 import UpdateTicketService from "../TicketServices/UpdateTicketService";
 import { sayChatbot } from "./ChatBotListener";
 import hourExpedient from "./hourExpedient";
+import { SendMessage } from "../../helpers/SendMessage";
+import { Configuration, OpenAIApi } from 'openai';
 
-type Session = AnyWASocket & {
+const organization = process.env.GPT_ORGANIZATION || "";
+const apiKey = process.env.GPT_APIKEY || "";
+
+const configuration = new Configuration({
+  organization: organization,
+  apiKey: apiKey,
+});
+
+const openai = new OpenAIApi(configuration);
+
+const getDavinciResponse = async (clientText: string) => {
+  const options = {
+    model: 'text-davinci-003', // Model to be used
+    prompt: clientText, // User-sent text
+    temperature: 1, // Level of variation of generated responses, 1 is the maximum
+    max_tokens: 4000, // Number of tokens (words) to be returned by the bot, 4000 is the maximum
+  };
+
+  try {
+    const response = await openai.createCompletion(options);
+    let botResponse = '';
+    response.data.choices.forEach(({ text }) => {
+      botResponse += text;
+    });
+    return `🤖 SENAI ChatGPT :\n\n${botResponse.trim()}\n\n🚀 Sempre acompanhando as novas tecnologias o SENAI proporciona experiências como esta. Compartilhe com seus amigos!\n\n⚠️ O SENAI MS não se responsabiliza pelos conteúdos gerados.\n\n👉 O conteúdo acima foi gerado através da Inteligência Artificial ChatGPT, saiba mais em https://openai.com/.`;
+  } catch (e) {
+    return `❌ Erro! O ChatGPT possui algumas limitações quanto ao uso e disponibilidade do serviço.\n\n💬 Refaça sua busca de um modo diferente.\n\n⏳ Ou aguarde o retorno do serviço.\n\nDescrição do erro:\n${e.response.data.error.message}`;
+  }
+};
+
+const getDalleResponse = async (clientText: string): Promise<string> => {
+  const options: any = {
+  prompt: clientText, // Descrição da imagem
+  n: 1, // Número de imagens a serem geradas
+  size: "1024x1024", // Tamanho da imagem
+  }
+  try {
+      const response = await openai.createImage(options);
+      return response.data.data[0].url;
+  } catch (e) {
+      return `❌ Erro! O ChatGPT possui algumas limitações quanto ao uso e disponibilidade do serviço.\n\n💬 Refaça sua busca de um modo diferente.\n\n⏳ Ou aguarde o retorno do serviço.\n\nDescrição do erro:\n${e.response.data.error.message}`;
+  }
+};
+
+type Session = WASocket & {
   id?: number;
   store?: Store;
 };
@@ -199,15 +243,10 @@ export const getQuotedMessage = (msg: proto.IWebMessageInfo): any => {
 };
 
 const getMeSocket = (wbot: Session): IMe => {
-  return wbot.type === "legacy"
-    ? {
-        id: jidNormalizedUser((wbot as WALegacySocket).state.legacy.user.id),
-        name: (wbot as WALegacySocket).state.legacy.user.name
-      }
-    : {
+  return {
         id: jidNormalizedUser((wbot as WASocket).user.id),
         name: (wbot as WASocket).user.name
-      };
+  };
 };
 
 const getSenderMessage = (
@@ -224,10 +263,7 @@ const getSenderMessage = (
 };
 
 const getContactMessage = async (msg: proto.IWebMessageInfo, wbot: Session) => {
-  if (wbot.type === "legacy") {
-    return wbot.store.contacts[msg.key.participant || msg.key.remoteJid] as IMe;
-  }
-
+  
   const isGroup = msg.key.remoteJid.includes("g.us");
   const rawNumber = msg.key.remoteJid.replace(/\D/g, "");
   return isGroup
@@ -478,6 +514,7 @@ const verifyQueue = async (
   });
 
   const botText = async () => {
+    
     if (choosenQueue) {
       await UpdateTicketService({
         ticketData: { queueId: choosenQueue.id },
@@ -735,6 +772,10 @@ const handleMessage = async (
       where: { key: "CheckMsgIsGroup" }
     });
 
+    const enableGPT = await Setting.findOne({
+      where: { key: "EnableGPT" }
+    });
+
     const bodyMessage = getBodyMessage(msg);
     const msgType = getTypeMessage(msg);
 
@@ -763,7 +804,7 @@ const handleMessage = async (
     if (msgIsGroupBlock?.value === "enabled" && isGroup) return;
 
     if (isGroup) {
-      const grupoMeta = await wbot.groupMetadata(msg.key.remoteJid, false);
+      const grupoMeta = await wbot.groupMetadata(msg.key.remoteJid);
       const msgGroupContact = {
         id: grupoMeta.id,
         name: grupoMeta.subject
@@ -831,9 +872,9 @@ const handleMessage = async (
       if (
         getLastMessageFromMe?.body ===
         formatBody(`\u200e${whatsapp.outOfWorkMessage}`, contact)
-      )
-        return;
-
+      )        
+      return;
+  
       const body = formatBody(`\u200e${whatsapp.outOfWorkMessage}`, contact);
       const sentMessage = await wbot.sendMessage(
         `${contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`,
@@ -844,6 +885,51 @@ const handleMessage = async (
 
       await verifyMessage(sentMessage, ticket, contact);
     }
+  
+  if (enableGPT?.value === "disable") return;
+  
+  const msgChatGPT = msg.message.conversation;
+  
+  if ( msgChatGPT.toLowerCase().includes("/botsenai") && !msgChatGPT.toLowerCase().includes(" senai") && !msgChatGPT.toLowerCase().includes(" sesi") && !msgChatGPT.toLowerCase().includes(" iel") && !msgChatGPT.toLowerCase().includes(" fiems")) {
+    const index = msgChatGPT.indexOf(' ');
+    const question = msgChatGPT.substring(index + 1);
+    const response = await getDavinciResponse(question);
+    //console.log('RESULT: ', response);
+    const body = formatBody(response, contact);
+      const sentMessage = await wbot.sendMessage(
+        `${contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`,
+        {
+          text: body
+        }
+      );
+ 
+  }
+  
+  if ( msgChatGPT.includes("/imgsenai") ) {
+    const index = msgChatGPT.indexOf(' ');
+    const imgDescription = msgChatGPT.substring(index + 1);
+    const imgUrl = await getDalleResponse(imgDescription);
+    const ZDGImagem = {
+      caption: "Imagem gerada por Inteligência Artificial",
+      image: {
+        url: imgUrl,
+      },
+    };
+    //console.log('RESULT: ', ZDGImagem);
+    const sentMessage = await wbot.sendMessage(
+        `${contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`,
+        {
+          ...ZDGImagem
+        }
+      );
+    const sentMessage2 = await wbot.sendMessage(
+        `${contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`,
+        {
+          text: `🚀 Sempre acompanhando as novas tecnologias o SENAI proporciona experiências como esta. Compartilhe com seus amigos!\n\n⚠️ O SENAI MS não se responsabiliza pelos conteúdos gerados.\n\n👉 O conteúdo acima foi gerado através da Inteligência Artificial Dall-E 2, saiba mais em https://openai.com/.`
+        }
+      );
+  }
+
   } catch (err) {
     console.log(err);
     Sentry.captureException(err);
@@ -914,8 +1000,10 @@ const wbotMessageListener = async (wbot: Session): Promise<void> => {
         ) {
           if (message.key.remoteJid != "status@broadcast") (wbot as WASocket)!.readMessages([message.key]);
         }
-        // console.log(JSON.stringify(message));
+        
+        //console.log(JSON.stringify(message));
         handleMessage(message, wbot);
+
       });
     });
 
@@ -926,9 +1014,6 @@ const wbotMessageListener = async (wbot: Session): Promise<void> => {
       });
     });
 
-    wbot.ev.on("messages.set", async (messageSet: IMessage) => {
-      console.log(messageSet);
-    });
   } catch (error) {
     Sentry.captureException(error);
     logger.error(`Error handling wbot message listener. Err: ${error}`);
