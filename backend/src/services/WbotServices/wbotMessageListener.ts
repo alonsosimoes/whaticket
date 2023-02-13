@@ -37,9 +37,12 @@ import hourExpedient from "./hourExpedient";
 import { SendMessage } from "../../helpers/SendMessage";
 import { Configuration, OpenAIApi } from 'openai';
 
+const organization = process.env.GPT_ORGANIZATION || "";
+const apiKey = process.env.GPT_APIKEY || "";
+
 const configuration = new Configuration({
-  organization: process.env.GPT_ORGANIZATION,
-  apiKey: process.env.GPT_APIKEY,
+  organization: organization,
+  apiKey: apiKey,
 });
 
 const openai = new OpenAIApi(configuration);
@@ -769,6 +772,10 @@ const handleMessage = async (
       where: { key: "CheckMsgIsGroup" }
     });
 
+    const enableGPT = await Setting.findOne({
+      where: { key: "EnableGPT" }
+    });
+
     const bodyMessage = getBodyMessage(msg);
     const msgType = getTypeMessage(msg);
 
@@ -878,6 +885,8 @@ const handleMessage = async (
 
       await verifyMessage(sentMessage, ticket, contact);
     }
+  
+  if (enableGPT?.value === "disable") return;
   
   const msgChatGPT = msg.message.conversation;
   
