@@ -31,17 +31,17 @@ const SendWhatsAppMessage = async ({
         }
       });
 
-      const msgFound = JSON.parse(JSON.stringify(chatMessages.dataJson));
 
       options = {
         quoted: {
-          key: msgFound.key,
+          key: JSON.parse(chatMessages.dataJson).key,
           message: {
-            extendedTextMessage: msgFound.message.extendedTextMessage
+            extendedTextMessage: JSON.parse(chatMessages.dataJson).message.extendedTextMessage
           }
         }
       };
     }
+    
   }
 
   try {
