@@ -1,14 +1,13 @@
 import makeWASocket, {
   WASocket,
-  MessageRetryMap,
   AuthenticationState,
   DisconnectReason,
   fetchLatestBaileysVersion,
   makeInMemoryStore
-} from "@adiwajshing/baileys";
+} from "@whiskeysockets/baileys";
 
 import { Boom } from "@hapi/boom";
-import MAIN_LOGGER from "@adiwajshing/baileys/lib/Utils/logger";
+import MAIN_LOGGER from "@whiskeysockets/baileys/lib/Utils/logger";
 import Whatsapp from "../models/Whatsapp";
 import { logger } from "../utils/logger";
 import authState from "../helpers/authState";

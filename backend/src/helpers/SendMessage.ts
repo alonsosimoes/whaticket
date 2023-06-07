@@ -3,7 +3,7 @@ import GetWhatsappWbot from "./GetWhatsappWbot";
 import SendWhatsAppMedia, { processAudio, processAudioFile } from "../services/WbotServices/SendWhatsAppMedia";
 import mime from "mime-types";
 import fs from "fs";
-import { AnyMessageContent } from "@adiwajshing/baileys";
+import { AnyMessageContent } from "@whiskeysockets/baileys";
 
 export type MessageData = {
   number: number | string;
