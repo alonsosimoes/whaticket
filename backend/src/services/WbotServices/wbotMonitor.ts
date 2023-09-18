@@ -1,13 +1,13 @@
 import * as Sentry from "@sentry/node";
 
-import { AnyWASocket, Contact } from "@adiwajshing/baileys";
+import { WASocket, Contact } from "@whiskeysockets/baileys";
 import { getIO } from "../../libs/socket";
 import Whatsapp from "../../models/Whatsapp";
 import { logger } from "../../utils/logger";
 import { Store } from "../../libs/store";
 import createOrUpdateBaileysService from "../BaileysServices/CreateOrUpdateBaileysService";
 
-type Session = AnyWASocket & {
+type Session = WASocket & {
   id?: number;
   store?: Store;
 };

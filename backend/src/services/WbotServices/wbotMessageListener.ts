@@ -5,7 +5,7 @@ import * as Sentry from "@sentry/node";
 import { isNil, isNull, head } from "lodash";
 
 import {
-  AnyWASocket,
+  WASocket,
   downloadContentFromMessage,
   extractMessageContent,
   getContentType,
@@ -13,11 +13,9 @@ import {
   MediaType,
   MessageUpsertType,
   proto,
-  WALegacySocket,
   WAMessage,
-  WAMessageUpdate,
-  WASocket
-} from "@adiwajshing/baileys";
+  WAMessageUpdate
+} from "@whiskeysockets/baileys";
 import Contact from "../../models/Contact";
 import Ticket from "../../models/Ticket";
 import Message from "../../models/Message";
@@ -47,7 +45,7 @@ import { campaignQueue, parseToMilliseconds, randomValue } from "../../queues";
 import User from "../../models/User";
 import Setting from "../../models/Setting";
 
-type Session = AnyWASocket & {
+type Session = WASocket & {
   id?: number;
   store?: Store;
 };
@@ -106,15 +104,10 @@ export const getQuotedMessageId = (msg: proto.IWebMessageInfo) => {
 };
 
 const getMeSocket = (wbot: Session): IMe => {
-  return wbot.type === "legacy"
-    ? {
-        id: jidNormalizedUser((wbot as WALegacySocket).state.legacy.user.id),
-        name: (wbot as WALegacySocket).state.legacy.user.name
-      }
-    : {
+  return  {
         id: jidNormalizedUser((wbot as WASocket).user.id),
         name: (wbot as WASocket).user.name
-      };
+  };
 };
 
 const getSenderMessage = (
@@ -131,10 +124,7 @@ const getSenderMessage = (
 };
 
 const getContactMessage = async (msg: proto.IWebMessageInfo, wbot: Session) => {
-  if (wbot.type === "legacy") {
-    return wbot.store.contacts[msg.key.participant || msg.key.remoteJid] as IMe;
-  }
-
+  
   const isGroup = msg.key.remoteJid.includes("g.us");
   const rawNumber = msg.key.remoteJid.replace(/\D/g, "");
   return isGroup
@@ -800,7 +790,7 @@ const handleMessage = async (
     const isGroup = msg.key.remoteJid?.endsWith("@g.us");
 
     if (isGroup) {
-      const grupoMeta = await wbot.groupMetadata(msg.key.remoteJid, false);
+      const grupoMeta = await wbot.groupMetadata(msg.key.remoteJid);
       const msgGroupContact = {
         id: grupoMeta.id,
         name: grupoMeta.subject
