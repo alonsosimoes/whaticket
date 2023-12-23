@@ -2,7 +2,7 @@
   "name": "frontend",
   "version": "0.1.0",
   "nomeEmpresa": "MultiWhats",
-  "versionSystem": "3.2",
+  "versionSystem": "3.3",
   "private": true,
   "dependencies": {
     "@material-ui/core": "^4.11.0",
