@@ -7,6 +7,7 @@ import makeWASocket, {
 } from "@whiskeysockets/baileys";
 
 import { Boom } from "@hapi/boom";
+import NodeCache from "node-cache";
 import MAIN_LOGGER from "@whiskeysockets/baileys/lib/Utils/logger";
 import Whatsapp from "../models/Whatsapp";
 import { logger } from "../utils/logger";
@@ -16,6 +17,10 @@ import { getIO } from "./socket";
 import { Store } from "./store";
 import { StartWhatsAppSession } from "../services/WbotServices/StartWhatsAppSession";
 import DeleteBaileysService from "../services/BaileysServices/DeleteBaileysService";
+
+// external map to store retry counts of messages when decryption/encryption fails
+// keep this out of the socket itself, so as to prevent a message decryption/encryption loop across socket restarts
+const msgRetryCounterCache = new NodeCache();
 
 const loggerBaileys = MAIN_LOGGER.child({});
 loggerBaileys.level = "error";
@@ -82,23 +87,21 @@ export const initWbot = async (whatsapp: Whatsapp): Promise<Session> => {
           logger: loggerBaileys
         });
 
-        const { state, saveState } = isMultidevice
-          ? await authState(whatsapp)
-          : await authState(whatsapp);
+        const { state, saveState } = await authState(whatsapp);
 
-        wsocket = isMultidevice
-          ? makeWASocket({
-              logger: loggerBaileys,
-              printQRInTerminal: false,
-              auth: state as AuthenticationState,
-              version
-            })
-          : makeWASocket({
-              logger: loggerBaileys,
-              printQRInTerminal: false,
-              auth: state as AuthenticationState,
-              version
-            });
+        wsocket = makeWASocket({
+          logger: loggerBaileys,
+          printQRInTerminal: false,
+          auth: state as AuthenticationState,
+          version,
+          msgRetryCounterCache,
+          getMessage: async key => {
+            if (store) {
+              const msg = await store.loadMessage(key.remoteJid!, key.id!);
+              return msg?.message || undefined;
+            }
+          }
+        });
 
         wsocket.ev.on(
           "connection.update",
