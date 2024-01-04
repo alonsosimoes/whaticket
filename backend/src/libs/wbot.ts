@@ -1,9 +1,9 @@
 import makeWASocket, {
   WASocket,
-  AuthenticationState,
   DisconnectReason,
   fetchLatestBaileysVersion,
-  makeInMemoryStore
+  makeInMemoryStore,
+  makeCacheableSignalKeyStore
 } from "@whiskeysockets/baileys";
 
 import { Boom } from "@hapi/boom";
@@ -92,7 +92,10 @@ export const initWbot = async (whatsapp: Whatsapp): Promise<Session> => {
         wsocket = makeWASocket({
           logger: loggerBaileys,
           printQRInTerminal: false,
-          auth: state as AuthenticationState,
+          auth: {
+            creds: state.creds,
+            keys: makeCacheableSignalKeyStore(state.keys, logger)
+          },
           version,
           msgRetryCounterCache,
           getMessage: async key => {
