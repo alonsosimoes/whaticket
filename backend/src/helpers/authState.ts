@@ -19,7 +19,7 @@ const KEY_MAP: { [T in keyof SignalDataTypeMap]: string } = {
 
 const authState = async (
   whatsapp: Whatsapp
-): Promise<{ state: AuthenticationState; saveState: () => void }> => {
+): Promise<{ state: AuthenticationState; saveCreds: () => Promise<void> }> => {
   let creds: AuthenticationCreds;
   let keys: any = {};
 
@@ -28,8 +28,10 @@ const authState = async (
       await whatsapp.update({
         session: JSON.stringify({ creds, keys }, BufferJSON.replacer, 0)
       });
+      return null;
     } catch (error) {
       Sentry.captureException(error);
+      return null;
     }
   };
 
@@ -61,7 +63,7 @@ const authState = async (
             return dict;
           }, {});
         },
-        set: (data: any) => {
+        set: async (data: any) => {
           for (const _key in data) {
             const key = KEY_MAP[_key as keyof SignalDataTypeMap];
             keys[key] = keys[key];
@@ -69,11 +71,13 @@ const authState = async (
             Object.assign(keys[key], data[_key]);
           }
 
-          saveState();
+          await saveState();
         }
       }
     },
-    saveState
+    saveCreds: () => {
+      return saveState();
+    }
   };
 };
 
