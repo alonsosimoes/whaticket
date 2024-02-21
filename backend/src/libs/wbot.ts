@@ -87,7 +87,7 @@ export const initWbot = async (whatsapp: Whatsapp): Promise<Session> => {
           logger: loggerBaileys
         });
 
-        const { state, saveCreds } = await authState(whatsapp);
+        const { state, saveState } = await authState(whatsapp);
 
         wsocket = makeWASocket({
           logger: loggerBaileys,
@@ -209,7 +209,7 @@ export const initWbot = async (whatsapp: Whatsapp): Promise<Session> => {
             }
           }
         );
-        wsocket.ev.on("creds.update", saveCreds);
+        wsocket.ev.on("creds.update", saveState);
 
         wsocket.store = store;
         store.bind(wsocket.ev);
