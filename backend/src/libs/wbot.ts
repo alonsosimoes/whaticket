@@ -108,7 +108,12 @@ export const initWbot = async (whatsapp: Whatsapp): Promise<Session> => {
 
         wsocket.ev.on(
           "connection.update",
-          async ({ connection, lastDisconnect, qr }) => {
+          async ({
+            connection,
+            lastDisconnect,
+            qr,
+            receivedPendingNotifications
+          }) => {
             logger.info(
               `Socket  ${name} Connection Update ${connection || ""} ${
                 lastDisconnect || ""
@@ -146,6 +151,13 @@ export const initWbot = async (whatsapp: Whatsapp): Promise<Session> => {
             }
 
             if (connection === "open") {
+              if (
+                receivedPendingNotifications &&
+                !wsocket.authState.creds?.myAppStateKeyId
+              ) {
+                wsocket.ev.flush(); // this
+              }
+
               await whatsapp.update({
                 status: "CONNECTED",
                 qrcode: "",
