@@ -4,9 +4,7 @@ import { writeFile } from "fs";
 import * as Sentry from "@sentry/node";
 
 import {
-  downloadContentFromMessage,
   jidNormalizedUser,
-  MediaType,
   MessageUpsertType,
   proto,
   WAMessage,
@@ -14,7 +12,8 @@ import {
   WASocket,
   getContentType,
   extractMessageContent,
-  WAMessageStubType
+  WAMessageStubType,
+  downloadMediaMessage
 } from "@whiskeysockets/baileys";
 
 import Contact from "../../models/Contact";
@@ -34,7 +33,6 @@ import { debounce } from "../../helpers/Debounce";
 import UpdateTicketService from "../TicketServices/UpdateTicketService";
 import { sayChatbot } from "./ChatBotListener";
 import hourExpedient from "./hourExpedient";
-import { SendMessage } from "../../helpers/SendMessage";
 import { Configuration, OpenAIApi } from 'openai';
 
 const organization = process.env.GPT_ORGANIZATION || "";
@@ -263,7 +261,7 @@ const getSenderMessage = (
 };
 
 const getContactMessage = async (msg: proto.IWebMessageInfo, wbot: Session) => {
-  
+
   const isGroup = msg.key.remoteJid.includes("g.us");
   const rawNumber = msg.key.remoteJid.replace(/\D/g, "");
   return isGroup
@@ -277,7 +275,7 @@ const getContactMessage = async (msg: proto.IWebMessageInfo, wbot: Session) => {
       };
 };
 
-const downloadMedia = async (msg: proto.IWebMessageInfo) => {
+const downloadMedia = async (msg: proto.IWebMessageInfo, wbot: Session) => {
   const mineType =
     msg.message?.imageMessage ||
     msg.message?.audioMessage ||
@@ -285,34 +283,17 @@ const downloadMedia = async (msg: proto.IWebMessageInfo) => {
     msg.message?.stickerMessage ||
     msg.message?.documentMessage;
 
-  const messageType = mineType.mimetype
-    .split("/")[0]
-    .replace("application", "document")
-    ? (mineType.mimetype
-        .split("/")[0]
-        .replace("application", "document") as MediaType)
-    : (mineType.mimetype.split("/")[0] as MediaType);
-
-  const stream = await downloadContentFromMessage(
-    msg.message.audioMessage ||
-      msg.message.videoMessage ||
-      msg.message.documentMessage ||
-      msg.message.imageMessage ||
-      msg.message.stickerMessage ||
-      msg.message.extendedTextMessage?.contextInfo.quotedMessage.imageMessage,
-    messageType
-  );
-
-  let buffer = Buffer.from([]);
-
-  // eslint-disable-next-line no-restricted-syntax
-  for await (const chunk of stream) {
-    buffer = Buffer.concat([buffer, chunk]);
-  }
-
-  if (!buffer) {
-    throw new Error("ERR_WAPP_DOWNLOAD_MEDIA");
-  }
+  const buffer = await downloadMediaMessage(
+      msg,
+      'buffer',
+      { },
+      {
+          logger,
+          // pass this so that baileys can request a reupload of media
+          // that has been deleted
+          reuploadRequest: wbot.updateMediaMessage
+      }
+  )
 
   let filename = msg.message?.documentMessage?.fileName || "";
 
@@ -394,11 +375,12 @@ function makeRandomId(length: number) {
 const verifyMediaMessage = async (
   msg: proto.IWebMessageInfo,
   ticket: Ticket,
-  contact: Contact
+  contact: Contact,
+  wbot: Session
 ): Promise<Message> => {
   const quotedMsg = await verifyQuotedMessage(msg);
 
-  const media = await downloadMedia(msg);
+  const media = await downloadMedia(msg, wbot);
 
   if (!media) {
     throw new Error("ERR_WAPP_DOWNLOAD_MEDIA");
@@ -532,7 +514,7 @@ const verifyQueue = async (
   });
 
   const botText = async () => {
-    
+
     if (choosenQueue) {
       await UpdateTicketService({
         ticketData: { queueId: choosenQueue.id },
@@ -855,11 +837,11 @@ const handleMessage = async (
     });
 
     if (hasMedia) {
-      await verifyMediaMessage(msg, ticket, contact);
+      await verifyMediaMessage(msg, ticket, contact, wbot);
     } else {
       await verifyMessage(msg, ticket, contact);
     }
-    
+
     const checkExpedient = await hourExpedient();
     if (checkExpedient) {
     if (
@@ -886,13 +868,13 @@ const handleMessage = async (
         },
         order: [["createdAt", "DESC"]]
       });
-      
+
       if (
         getLastMessageFromMe?.body ===
         formatBody(`\u200e${whatsapp.outOfWorkMessage}`, contact)
-      )        
+      )
       return;
-  
+
       const body = formatBody(`\u200e${whatsapp.outOfWorkMessage}`, contact);
       const sentMessage = await wbot.sendMessage(
         `${contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`,
@@ -903,11 +885,11 @@ const handleMessage = async (
 
       await verifyMessage(sentMessage, ticket, contact);
     }
-  
+
   if (enableGPT?.value === "disabled" || organization === "" || apiKey === "") return;
-  
+
   const msgChatGPT = msg.message.conversation;
-  
+
   if ( msgChatGPT.toLowerCase().includes("/botsenai") && !msgChatGPT.toLowerCase().includes(" senai") && !msgChatGPT.toLowerCase().includes(" sesi") && !msgChatGPT.toLowerCase().includes(" iel") && !msgChatGPT.toLowerCase().includes(" fiems")) {
     const index = msgChatGPT.indexOf(' ');
     const question = msgChatGPT.substring(index + 1);
@@ -920,9 +902,9 @@ const handleMessage = async (
           text: body
         }
       );
- 
+
   }
-  
+
   if ( msgChatGPT.includes("/imgsenai") ) {
     const index = msgChatGPT.indexOf(' ');
     const imgDescription = msgChatGPT.substring(index + 1);
@@ -1018,7 +1000,7 @@ const wbotMessageListener = async (wbot: Session): Promise<void> => {
         ) {
           if (message.key.remoteJid != "status@broadcast") (wbot as WASocket)!.readMessages([message.key]);
         }
-        
+
         //console.log(JSON.stringify(message));
         handleMessage(message, wbot);
 
