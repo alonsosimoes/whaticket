@@ -34,6 +34,7 @@ import UpdateTicketService from "../TicketServices/UpdateTicketService";
 import { sayChatbot } from "./ChatBotListener";
 import hourExpedient from "./hourExpedient";
 import { Configuration, OpenAIApi } from 'openai';
+import internal from "stream";
 
 const organization = process.env.GPT_ORGANIZATION || "";
 const apiKey = process.env.GPT_APIKEY || "";
@@ -100,6 +101,26 @@ interface IMessage {
 }
 
 const writeFileAsync = promisify(writeFile);
+
+// Function to write data to a file asynchronously
+async function writeDataToFileAsync(data: Buffer | internal.Transform, filePath: string): Promise<void> {
+    if (Buffer.isBuffer(data)) {
+        // If data is a Buffer, convert it to a string or use it directly
+        await writeFileAsync(filePath, data);
+    } else if (data instanceof internal.Transform) {
+        // If data is a Transform stream, pipe it to a temporary buffer
+        const tempBuffer: Buffer[] = [];
+        data.on('data', (chunk: Buffer) => {
+            tempBuffer.push(chunk);
+        });
+        data.on('end', async () => {
+            const finalBuffer = Buffer.concat(tempBuffer);
+            await writeFileAsync(filePath, finalBuffer);
+        });
+    } else {
+        throw new Error('Unsupported data type');
+    }
+}
 
 const getTypeMessage = (msg: proto.IWebMessageInfo): string => {
   return getContentType(msg.message);
@@ -399,11 +420,11 @@ const verifyMediaMessage = async (
   try {
     const ext = media.mimetype.split("/")[1].split(";")[0];
     media.filename = `${new Date().getTime()} - ${media.filename}`;
-    await writeFileAsync(
-      join(__dirname, "..", "..", "..", "public", media.filename),
+
+    await writeDataToFileAsync(
       media.data,
-      "base64"
-    );
+      join(__dirname, "..", "..", "..", "public", media.filename),
+    )
   } catch (err) {
     Sentry.captureException(err);
     logger.error(err);
