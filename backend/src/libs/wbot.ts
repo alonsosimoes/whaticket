@@ -1,9 +1,9 @@
 import makeWASocket, {
   WASocket,
+  AuthenticationState,
   DisconnectReason,
   fetchLatestBaileysVersion,
   makeInMemoryStore,
-  makeCacheableSignalKeyStore
 } from "@whiskeysockets/baileys";
 
 import { Boom } from "@hapi/boom";
@@ -11,12 +11,13 @@ import NodeCache from "node-cache";
 import MAIN_LOGGER from "@whiskeysockets/baileys/lib/Utils/logger";
 import Whatsapp from "../models/Whatsapp";
 import { logger } from "../utils/logger";
-import authState from "../helpers/authState";
 import AppError from "../errors/AppError";
 import { getIO } from "./socket";
 import { Store } from "./store";
 import { StartWhatsAppSession } from "../services/WbotServices/StartWhatsAppSession";
 import DeleteBaileysService from "../services/BaileysServices/DeleteBaileysService";
+import { useMultiFileAuthState } from "../helpers/useMultiFileAuthState";
+import BaileysSessions from "../models/BaileysSessions";
 
 // external map to store retry counts of messages when decryption/encryption fails
 // keep this out of the socket itself, so as to prevent a message decryption/encryption loop across socket restarts
@@ -87,15 +88,12 @@ export const initWbot = async (whatsapp: Whatsapp): Promise<Session> => {
           logger: loggerBaileys
         });
 
-        const { state, saveState } = await authState(whatsapp);
+        const { state, saveCreds } = await useMultiFileAuthState(whatsapp);
 
         wsocket = makeWASocket({
           logger: loggerBaileys,
           printQRInTerminal: false,
-          auth: {
-            creds: state.creds,
-            keys: makeCacheableSignalKeyStore(state.keys, logger)
-          },
+          auth: state as AuthenticationState,
           version,
           msgRetryCounterCache,
           getMessage: async key => {
@@ -120,8 +118,19 @@ export const initWbot = async (whatsapp: Whatsapp): Promise<Session> => {
 
             if (connection === "close") {
               if (disconect === 403) {
-                await whatsapp.update({ status: "PENDING", session: "" });
+                await whatsapp.update({
+                  status: "PENDING",
+                  session: "",
+                  number: ""
+                });
                 await DeleteBaileysService(whatsapp.id);
+
+                await BaileysSessions.destroy({
+                  where: {
+                    whatsappId: whatsapp.id
+                  }
+                });
+
                 io.emit("whatsappSession", {
                   action: "update",
                   session: whatsapp
@@ -132,9 +141,21 @@ export const initWbot = async (whatsapp: Whatsapp): Promise<Session> => {
               if (disconect !== DisconnectReason.loggedOut) {
                 removeWbot(id, false);
                 setTimeout(() => StartWhatsAppSession(whatsapp), 2000);
-              } else {
-                await whatsapp.update({ status: "PENDING", session: "" });
+              }
+
+              if (disconect === DisconnectReason.loggedOut) {
+                await whatsapp.update({
+                  status: "PENDING",
+                  session: "",
+                  number: ""
+                });
                 await DeleteBaileysService(whatsapp.id);
+
+                await BaileysSessions.destroy({
+                  where: {
+                    whatsappId: whatsapp.id
+                  }
+                });
 
                 io.emit("whatsappSession", {
                   action: "update",
@@ -175,6 +196,11 @@ export const initWbot = async (whatsapp: Whatsapp): Promise<Session> => {
                   qrcode: ""
                 });
                 await DeleteBaileysService(whatsappUpdate.id);
+                await BaileysSessions.destroy({
+                  where: {
+                    whatsappId: whatsapp.id
+                  }
+                });
                 io.emit("whatsappSession", {
                   action: "update",
                   session: whatsappUpdate
@@ -209,7 +235,8 @@ export const initWbot = async (whatsapp: Whatsapp): Promise<Session> => {
             }
           }
         );
-        wsocket.ev.on("creds.update", saveState);
+
+        wsocket.ev.on("creds.update", saveCreds);
 
         wsocket.store = store;
         store.bind(wsocket.ev);
