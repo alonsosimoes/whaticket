@@ -10,7 +10,7 @@ import { Boom } from "@hapi/boom";
 import NodeCache from "node-cache";
 import MAIN_LOGGER from "@whiskeysockets/baileys/lib/Utils/logger";
 import Whatsapp from "../models/Whatsapp";
-import { logger } from "../utils/logger";
+import { connectionLogger, logger, socketLogger, whatsappLogger } from "../utils/logger";
 import authState from "../helpers/authState";
 import AppError from "../errors/AppError";
 import { getIO } from "./socket";
@@ -120,6 +120,7 @@ export const initWbot = async (whatsapp: Whatsapp): Promise<Session> => {
 
             if (connection === "close") {
               if (disconect === 403) {
+                connectionLogger.info("#forbiden");
                 await whatsapp.update({ status: "PENDING", session: "" });
                 await DeleteBaileysService(whatsapp.id);
                 io.emit("whatsappSession", {
@@ -129,10 +130,30 @@ export const initWbot = async (whatsapp: Whatsapp): Promise<Session> => {
                 removeWbot(id, false);
               }
 
+              if (disconect !== DisconnectReason.connectionClosed){
+                connectionLogger.info("#connectionClosed");
+              }
+              if (disconect == DisconnectReason.connectionLost){
+                connectionLogger.info("#connectionLost");
+              }
+              if (disconect == DisconnectReason.connectionReplaced){
+                connectionLogger.info("#connectionReplaced");
+              }
+              if (disconect == DisconnectReason.timedOut){
+                connectionLogger.info("#timedOut");
+              }
+              if (disconect == DisconnectReason.badSession){
+                connectionLogger.info("#badSession");
+              }
+              if (disconect == DisconnectReason.unavailableService){
+                connectionLogger.info("#unavailableService");
+              } 
               if (disconect !== DisconnectReason.loggedOut) {
+                connectionLogger.info("#loggedOut");
                 removeWbot(id, false);
                 setTimeout(() => StartWhatsAppSession(whatsapp), 2000);
               } else {
+
                 await whatsapp.update({ status: "PENDING", session: "" });
                 await DeleteBaileysService(whatsapp.id);
 
@@ -164,7 +185,10 @@ export const initWbot = async (whatsapp: Whatsapp): Promise<Session> => {
                 wsocket.id = whatsapp.id;
                 sessions.push(wsocket);
               }
-
+              whatsappLogger.info("#session");
+              whatsappLogger.info(whatsapp);
+              socketLogger.info("#wsocket");
+              socketLogger.info(wsocket);
               resolve(wsocket);
             }
 
