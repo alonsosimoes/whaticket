@@ -1,0 +1,39 @@
+version: "3"
+
+# networks:
+#   whaticket:
+
+services:
+  mysql:
+    image: mariadb:latest
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_bin
+    volumes:
+      # - ./.docker/data/:/var/lib/mysql
+      - mysql-data:/var/lib/mysql
+    environment:
+      MYSQL_DATABASE: whaticket
+      MYSQL_ROOT_PASSWORD: whaticket
+      MYSQL_USER: whaticket
+      MYSQL_PASSWORD: whaticket
+      TZ: America/Campo_Grande
+    ports:
+      - "3306:3306"
+    restart: always
+    # networks:
+    #   - whaticket
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    environment:
+      PMA_HOSTS: mysql
+      PMA_PORT: 3306
+      MYSQL_ROOT_PASSWORD: whaticket
+    ports:
+      - "9000:80"
+    depends_on:
+      - mysql
+    # networks:
+    #   - whaticket
+
+volumes:
+  mysql-data:

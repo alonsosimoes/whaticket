@@ -22,7 +22,7 @@ import Message from "../../models/Message";
 
 import { getIO } from "../../libs/socket";
 import CreateMessageService from "../MessageServices/CreateMessageService";
-import { logger } from "../../utils/logger";
+import { logger, upsertLogger } from "../../utils/logger";
 import CreateOrUpdateContactService from "../ContactServices/CreateOrUpdateContactService";
 import FindOrCreateTicketService from "../TicketServices/FindOrCreateTicketService";
 import ShowWhatsAppService from "../WhatsappService/ShowWhatsAppService";
@@ -1007,6 +1007,9 @@ const filterMessages = (msg: WAMessage): boolean => {
 const wbotMessageListener = async (wbot: Session): Promise<void> => {
   try {
     wbot.ev.on("messages.upsert", async (messageUpsert: ImessageUpsert) => {
+      upsertLogger.info("#messageUpsert");
+      upsertLogger.info(messageUpsert);
+      
       const messages = messageUpsert.messages
         .filter(filterMessages)
         .map(msg => msg);
