@@ -3,7 +3,7 @@ import makeWASocket, {
   AuthenticationState,
   DisconnectReason,
   fetchLatestBaileysVersion,
-  makeInMemoryStore,
+  makeInMemoryStore
 } from "@whiskeysockets/baileys";
 
 import { Boom } from "@hapi/boom";
@@ -115,6 +115,42 @@ export const initWbot = async (whatsapp: Whatsapp): Promise<Session> => {
 
             const disconect = (lastDisconnect?.error as Boom)?.output
               ?.statusCode;
+
+            const reason = new Boom(lastDisconnect?.error)?.output?.statusCode;
+
+            if (connection === "close") {
+              if (reason === DisconnectReason.badSession) {
+                logger.error("Bad Session, Please Delete /auth and Scan Again");
+                process.exit();
+              } else if (reason === DisconnectReason.connectionClosed) {
+                logger.warn("Connection closed, reconnecting....");
+                // await startSocketServer();
+              } else if (reason === DisconnectReason.connectionLost) {
+                logger.warn("Connection Lost from Server, reconnecting...");
+                // await startSocketServer();
+              } else if (reason === DisconnectReason.connectionReplaced) {
+                logger.error(
+                  "Connection Replaced, Another New Session Opened, Please Close Current Session First"
+                );
+                process.exit();
+              } else if (reason === DisconnectReason.loggedOut) {
+                logger.error(
+                  "Device Logged Out, Please Delete /auth and Scan Again."
+                );
+                process.exit();
+              } else if (reason === DisconnectReason.restartRequired) {
+                logger.info("Restart Required, Restarting...");
+                // await startSocketServer();
+              } else if (reason === DisconnectReason.timedOut) {
+                logger.warn("Connection TimedOut, Reconnecting...");
+                // await startSocketServer();
+              } else {
+                logger.warn(
+                  `Unknown DisconnectReason: ${reason}: ${connection}`
+                );
+                // await startSocketServer();
+              }
+            }
 
             if (connection === "close") {
               if (disconect === 403) {
