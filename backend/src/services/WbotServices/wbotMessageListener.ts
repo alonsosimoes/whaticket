@@ -499,7 +499,8 @@ const isValidMsg = (msg: proto.IWebMessageInfo): boolean => {
     msgType === "stickerMessage" ||
     msgType === "buttonsResponseMessage" ||
     msgType === "listResponseMessage" ||
-    msgType === "listMessage";
+    msgType === "listMessage" ||
+    msgType === "contactMessage";
 
   return !!ifType;
 };

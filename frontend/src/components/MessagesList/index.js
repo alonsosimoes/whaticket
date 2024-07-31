@@ -453,9 +453,7 @@ const MessagesList = ({ ticketId, isGroup }) => {
 		
 		return <LocationPreview image={imageLocation} link={linkLocation} description={descriptionLocation} />
 	}
-	else if (message.mediaType === "vcard") {
-		//console.log("vcard")
-		//console.log(message)
+	else if (message.mediaType === "contactMessage") {
 		let array = message.body.split("\n");
 		let obj = [];
 		let contact = "";
@@ -691,7 +689,7 @@ const MessagesList = ({ ticketId, isGroup }) => {
                     {message.contact?.name}
                   </span>
                 )}
-                {(message.mediaUrl || message.mediaType === "location" || message.mediaType === "vcard" 
+                {(message.mediaUrl || message.mediaType === "location" || message.mediaType === "contactMessage" 
                 //|| message.mediaType === "multi_vcard" 
                 ) && checkMessageMedia(message)}
                 <div className={classes.textContentItem}>
@@ -721,7 +719,7 @@ const MessagesList = ({ ticketId, isGroup }) => {
                 >
                   <ExpandMore />
                 </IconButton>
-                {(message.mediaUrl || message.mediaType === "location" || message.mediaType === "vcard" 
+                {(message.mediaUrl || message.mediaType === "location" || message.mediaType === "contactMessage" 
                 //|| message.mediaType === "multi_vcard" 
                 ) && checkMessageMedia(message)}
                 <div
