@@ -1,0 +1,56 @@
+services:
+  mysql:
+    image: mariadb:latest
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_bin
+    volumes:
+      # - ./.docker/data/:/var/lib/mysql
+      - mysql-data:/var/lib/mysql
+    environment:
+      MYSQL_DATABASE: whaticket
+      MYSQL_ROOT_PASSWORD: whaticket
+      MYSQL_USER: whaticket
+      MYSQL_PASSWORD: whaticket
+      TZ: America/Campo_Grande
+    ports:
+      - "3306:3306"
+    restart: always
+    networks:
+      - whaticket
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    environment:
+      PMA_HOSTS: mysql
+      PMA_PORT: 3306
+      MYSQL_ROOT_PASSWORD: whaticket
+    ports:
+      - "9000:80"
+    depends_on:
+      - mysql
+    networks:
+      - whaticket
+  
+  redis:
+    image: redis:latest
+    networks:
+      - whaticket
+    container_name: whaticket-redis
+    environment:
+      - CACHE_REDIS_ENABLED=true
+      - CACHE_REDIS_URI=redis://localhost:6379/6
+      - CACHE_REDIS_PREFIX_KEY=evolution
+      - CACHE_REDIS_SAVE_INSTANCES=false
+      - CACHE_LOCAL_ENABLED=false
+    command: >
+      redis-server --port 6379 --appendonly yes
+    volumes:
+      - whaticket_redis:/data
+    ports:
+      - 6379:6379
+
+volumes:
+  mysql-data:
+  whaticket_redis:
+
+networks:
+  whaticket:

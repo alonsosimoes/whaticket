@@ -1,6 +1,6 @@
-import { Op, Sequelize } from "sequelize";
+import { Op, fn, col } from "sequelize";
 import Tag from "../../models/Tag";
-import Ticket from "../../models/Ticket";
+import TicketTag from "../../models/TicketTag";
 
 interface Request {
   searchParam?: string;
@@ -31,27 +31,26 @@ const ListService = async ({
   }
 
   const { count, rows: tags } = await Tag.findAndCountAll({
-    where: whereCondition,
+    where: { ...whereCondition },
     limit,
     offset,
     order: [["name", "ASC"]],
-    include: [{
-      model: Ticket,
-      as: 'tickets',
-      attributes: [],
-      required: false
-    }],
-    attributes: {
-      include: [[Sequelize.fn("COUNT", Sequelize.col("tickets.id")), "ticketsCount"]]
-    },
-    group: [
-      "Tag.id",
-      "tickets.TicketTag.tagId",
-      "tickets.TicketTag.ticketId",
-      "tickets.TicketTag.createdAt",
-      "tickets.TicketTag.updatedAt",
+    subQuery: false,
+    include: [
+      {
+        model: TicketTag,
+        as: "ticketTags",
+        attributes: [],
+        required: false
+      }
     ],
-    subQuery: false
+    attributes: [
+      "id",
+      "name",
+      "color",
+      [fn("count", col("ticketTags.tagId")), "ticketsCount"]
+    ],
+    group: ["Tag.id"] 
   });
   const hasMore = count > offset + tags.length;
 

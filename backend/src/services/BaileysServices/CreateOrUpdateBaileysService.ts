@@ -30,13 +30,13 @@ const createOrUpdateBaileysService = async ({
       getChats.filter((v: string, i: number, a: string) => a.indexOf(v) === i);
     }
 
-    if (contacts) {
-      getContacts.push(...contacts);
-      getContacts.sort();
-      getContacts.filter(
-        (v: string, i: number, a: string) => a.indexOf(v) === i
-      );
-    }
+    // if (contacts) {
+    //   getContacts.push(...contacts);
+    //   getContacts.sort();
+    //   getContacts.filter(
+    //     (v: string, i: number, a: string) => a.indexOf(v) === i
+    //   );
+    // }
 
     const newBaileys = await baileysExists.update({
       chats: JSON.stringify(getChats),

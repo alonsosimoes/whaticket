@@ -6,7 +6,8 @@ import {
   Model,
   PrimaryKey,
   AutoIncrement,
-  BelongsToMany
+  BelongsToMany,
+  HasMany
 } from "sequelize-typescript";
 import Ticket from "./Ticket";
 import TicketTag from "./TicketTag";
@@ -24,6 +25,9 @@ class Tag extends Model<Tag> {
   @Column
   color: string;
 
+  @HasMany(() => TicketTag)
+  ticketTags: TicketTag[];
+  
   @BelongsToMany(() => Ticket, () => TicketTag)
   tickets: Ticket[];
 

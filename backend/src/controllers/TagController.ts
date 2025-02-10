@@ -2,7 +2,6 @@ import { Request, Response } from "express";
 import { getIO } from "../libs/socket";
 
 import AppError from "../errors/AppError";
-
 import CreateService from "../services/TagServices/CreateService";
 import ListService from "../services/TagServices/ListService";
 import UpdateService from "../services/TagServices/UpdateService";
@@ -18,7 +17,6 @@ type IndexQuery = {
 
 export const index = async (req: Request, res: Response): Promise<Response> => {
   const { pageNumber, searchParam } = req.query as IndexQuery;
-
   const { tags, count, hasMore } = await ListService({
     searchParam,
     pageNumber
