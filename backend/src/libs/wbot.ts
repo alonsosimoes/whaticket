@@ -2,8 +2,9 @@ import makeWASocket, {
   WASocket,
   DisconnectReason,
   fetchLatestBaileysVersion,
-  makeInMemoryStore,
-  makeCacheableSignalKeyStore
+  makeCacheableSignalKeyStore,
+  WAMessageKey,
+  WAMessageContent
 } from "@whiskeysockets/baileys";
 
 import { Boom } from "@hapi/boom";
@@ -17,6 +18,7 @@ import { getIO } from "./socket";
 import { Store } from "./store";
 import { StartWhatsAppSession } from "../services/WbotServices/StartWhatsAppSession";
 import DeleteBaileysService from "../services/BaileysServices/DeleteBaileysService";
+import Message from "../models/Message";
 
 // external map to store retry counts of messages when decryption/encryption fails
 // keep this out of the socket itself, so as to prevent a message decryption/encryption loop across socket restarts
@@ -33,6 +35,54 @@ type Session = WASocket & {
 const sessions: Session[] = [];
 
 const retriesQrCodeMap = new Map<number, number>();
+
+let wsocket: Session = null;
+const store = new NodeCache({
+  stdTTL: 120,
+  checkperiod: 30,
+  useClones: false
+});
+
+async function getMessage(key: WAMessageKey): Promise<WAMessageContent> {
+  if (!key.id) return null;
+
+  const message = store.get(key.id);
+
+  if (message) {
+    logger.debug({ message }, "cacheMessage: recovered from cache");
+    return message;
+  }
+
+  logger.debug(
+    { key },
+    "cacheMessage: not found in cache - fallback to database"
+  );
+
+  let msg: Message;
+
+  msg = await Message.findOne({
+    where: { id: key.id, fromMe: true }
+  });
+ 
+  if (!msg) {
+    logger.debug({ key }, "cacheMessage: not found in database");
+    return undefined;
+  }
+
+  try {
+    const data = JSON.parse(msg.dataJson);
+    logger.debug({ key, data }, "cacheMessage: recovered from database");
+    store.set(key.id, data.message);
+    return data.message || undefined;
+  } catch (error) {
+    logger.error(
+      { key },
+      `cacheMessage: error parsing message from database - ${error.message}`
+    );
+  }
+
+  return undefined;
+}
 
 export const getWbot = (whatsappId: number): Session => {
   const sessionIndex = sessions.findIndex(s => s.id === whatsappId);
@@ -83,9 +133,9 @@ export const initWbot = async (whatsapp: Whatsapp): Promise<Session> => {
         let retriesQrCode = 0;
 
         let wsocket: Session = null;
-        const store = makeInMemoryStore({
-          logger: loggerBaileys
-        });
+        // const store = makeInMemoryStore({
+        //   logger: loggerBaileys
+        // });
 
         const { state, saveState } = await authState(whatsapp);
 
@@ -98,12 +148,13 @@ export const initWbot = async (whatsapp: Whatsapp): Promise<Session> => {
           },
           version,
           msgRetryCounterCache,
-          getMessage: async key => {
-            if (store) {
-              const msg = await store.loadMessage(key.remoteJid!, key.id!);
-              return msg?.message || undefined;
-            }
-          }
+          getMessage
+          // getMessage: async key => {
+          //   if (store) {
+          //     const msg = await store.loadMessage(key.remoteJid!, key.id!);
+          //     return msg?.message || undefined;
+          //   }
+          // }
         });
 
         wsocket.ev.on(
@@ -210,9 +261,9 @@ export const initWbot = async (whatsapp: Whatsapp): Promise<Session> => {
           }
         );
         wsocket.ev.on("creds.update", saveState);
-
-        wsocket.store = store;
-        store.bind(wsocket.ev);
+        
+        // wsocket.store = store;
+        // store.bind(wsocket.ev);
       })();
     } catch (error) {
       console.log(error);

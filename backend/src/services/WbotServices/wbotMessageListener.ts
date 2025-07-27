@@ -835,11 +835,13 @@ const handleMessage = async (
     }
     const whatsapp = await ShowWhatsAppService(wbot.id!);
 
-    const count = wbot.store.chats.get(
-      msg.key.remoteJid || msg.key.participant
-    );
+    const unreadMessages = msg.key.fromMe ? 0 : 1;
 
-    const unreadMessages = msg.key.fromMe ? 0 : count?.unreadCount || 1;
+    // const count = wbot.store.chats.get(
+    //   msg.key.remoteJid || msg.key.participant
+    // );
+
+    // const unreadMessages = msg.key.fromMe ? 0 : count?.unreadCount || 1;
 
     const contact = await verifyContact(msgContact, wbot);
 
@@ -998,7 +1000,7 @@ const filterMessages = (msg: WAMessage): boolean => {
       WAMessageStubType.E2E_DEVICE_CHANGED,
       WAMessageStubType.E2E_IDENTITY_CHANGED,
       WAMessageStubType.CIPHERTEXT
-    ].includes(msg.messageStubType as WAMessageStubType)
+    ].includes(msg.messageStubType)
   )
     return false;
 
