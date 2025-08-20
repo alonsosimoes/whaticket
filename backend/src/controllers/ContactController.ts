@@ -118,10 +118,7 @@ export const update = async (
 
   const schema = Yup.object().shape({
     name: Yup.string(),
-    number: Yup.string().matches(
-      /^\d+$/,
-      "Invalid number format. Only numbers is allowed."
-    )
+    number: Yup.string().matches(/^\d+(@lid)?$/, "Invalid number format. Only numbers is allowed.")
   });
 
   try {
